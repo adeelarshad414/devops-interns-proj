@@ -21,10 +21,19 @@ x-app-logging: &app-logging
     max-size: "10m"
     max-file: "3"
 
+# Applied to every service. no-new-privileges blocks a process from gaining more
+# privileges than its parent (setuid binaries, etc.) - cheap, and it closes a
+# whole class of container escape. Merged into each service with `<<: *hardening`.
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+
 services:
   # ---------------- TIER 3: DATA ----------------
   postgres:
     image: postgres:16-alpine
+    <<: *hardening
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-daig}
       POSTGRES_USER: ${POSTGRES_USER:-daig}
@@ -39,10 +48,15 @@ services:
       timeout: 3s
       retries: 12
       start_period: 10s
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1g }
     logging: *app-logging
 
   redis:
     image: redis:7-alpine
+    <<: *hardening
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes: ["redisdata:/data"]
     ports: ["6379:6379"]
@@ -51,6 +65,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 256m }
     logging: *app-logging
 
   # ---------------- TIER 2: APPLICATION ----------------
@@ -59,34 +76,46 @@ services:
       context: .
       dockerfile: services/orders/Dockerfile
       target: runtime
+    <<: *hardening
     environment: *app-env
     ports: ["3001:3001"]
     depends_on:
       postgres: { condition: service_healthy }
       redis:    { condition: service_started }
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512m }
     logging: *app-logging
 
   kitchen:
     build:
       context: .
       dockerfile: services/kitchen/Dockerfile
+    <<: *hardening
     environment: *app-env
     ports: ["3002:3002"]
     depends_on:
       postgres: { condition: service_healthy }
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512m }
     logging: *app-logging
 
   dispatch:
     build:
       context: .
       dockerfile: services/dispatch/Dockerfile
+    <<: *hardening
     environment: *app-env
     ports: ["3003:3003"]
     depends_on:
       postgres: { condition: service_healthy }
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 512m }
     logging: *app-logging
 
   # ---------------- TIER 1: PRESENTATION ----------------
@@ -94,9 +123,18 @@ services:
     build:
       context: .
       dockerfile: services/web/Dockerfile
+    <<: *hardening
     ports: ["8080:8080"]
-    depends_on: [orders, kitchen, dispatch]
+    # Wait for the app tier to be HEALTHY (image HEALTHCHECKs), not merely
+    # started, so the first page load doesn't 502 while backends boot.
+    depends_on:
+      orders:   { condition: service_healthy }
+      kitchen:  { condition: service_healthy }
+      dispatch: { condition: service_healthy }
     restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128m }
     logging: *app-logging
 
 volumes:

@@ -45,8 +45,38 @@ updates:
     commit-message:
       prefix: "chore(docker)"
 
+  - package-ecosystem: docker
+    directory: /services/kitchen
+    schedule: { interval: weekly }
+    commit-message:
+      prefix: "chore(docker)"
+
+  - package-ecosystem: docker
+    directory: /services/dispatch
+    schedule: { interval: weekly }
+    commit-message:
+      prefix: "chore(docker)"
+
+  - package-ecosystem: docker
+    directory: /services/web
+    schedule: { interval: weekly }
+    commit-message:
+      prefix: "chore(docker)"
+
   - package-ecosystem: terraform
     directory: /infra/aws
+    schedule: { interval: monthly }
+    commit-message:
+      prefix: "chore(infra)"
+
+  - package-ecosystem: terraform
+    directory: /infra/gcp
+    schedule: { interval: monthly }
+    commit-message:
+      prefix: "chore(infra)"
+
+  - package-ecosystem: terraform
+    directory: /infra/azure
     schedule: { interval: monthly }
     commit-message:
       prefix: "chore(infra)"

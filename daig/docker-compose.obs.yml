@@ -23,13 +23,26 @@ services:
     image: prom/prometheus:v2.54.1
     command:
       - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.retention.time=24h
+      # 31d so the 30-day error-budget window actually has 30 days of data.
+      - --storage.tsdb.retention.time=31d
       - --web.enable-lifecycle
+      # Accept Tempo's metrics_generator remote_write (service-graph/span metrics).
+      - --web.enable-remote-write-receiver
+      # Store exemplars so the metrics→trace pivot (p95 spike → the trace) works.
+      - --enable-feature=exemplar-storage
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/rules:/etc/prometheus/rules:ro
       - promdata:/prometheus
     ports: ["9090:9090"]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanagerdata:/alertmanager
+    ports: ["9093:9093"]
 
   loki:
     image: grafana/loki:3.1.1
@@ -78,6 +91,7 @@ services:
 
 volumes:
   promdata:
+  alertmanagerdata:
   lokidata:
   tempodata:
   pyroscopedata:

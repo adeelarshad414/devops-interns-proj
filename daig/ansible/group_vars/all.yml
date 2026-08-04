@@ -11,6 +11,11 @@ docker_compose_version: v2.29.7
 daig_app_dir: /opt/daig
 daig_service_user: daig
 
+# Published images the app host pulls (built and pushed by CI). Pin an immutable
+# tag per release — never deploy :latest to a real host.
+daig_registry: ghcr.io/adeelarshad414/daig
+daig_image_tag: "1.0.0"
+
 # Sysctl tuning for the iftar spike. Default somaxconn is 4096 on modern
 # kernels but the backlog is what actually drops connections under a burst,
 # so it is worth being explicit rather than inheriting a default.

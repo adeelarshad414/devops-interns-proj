@@ -194,5 +194,12 @@ resource "aws_ecs_service" "service" {
 
   health_check_grace_period_seconds = each.key == "orders" ? 60 : null
 
+  # Application Auto Scaling owns desired_count at runtime. Without this, the
+  # next `terraform apply` resets it to each.value.replicas and terminates live
+  # capacity mid-spike — the exact iftar scenario this stack teaches.
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
+
   depends_on = [aws_lb_listener.http]
 }

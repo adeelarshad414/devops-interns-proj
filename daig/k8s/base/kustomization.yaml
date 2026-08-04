@@ -4,6 +4,7 @@ namespace: daig
 
 resources:
   - namespace.yaml
+  - networkpolicy.yaml
   - configmap.yaml
   - secret.yaml
   - postgres.yaml
@@ -12,21 +13,29 @@ resources:
   - kitchen.yaml
   - dispatch.yaml
   - web.yaml
+  - hpa.yaml
 
-commonLabels:
-  app.kubernetes.io/part-of: daig
-  app.kubernetes.io/managed-by: kustomize
+# `labels` replaces the deprecated `commonLabels`. includeSelectors:false keeps
+# these off pod selectors, so changing a label later can't orphan a ReplicaSet.
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: daig
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
 
+# Pin an immutable tag, never :latest. Two pods of one Deployment must never run
+# different code, and `kubectl rollout undo` needs a distinct prior tag to
+# return to. Bump this (or set a digest) per release via your CD pipeline.
 images:
   - name: daig-orders
     newName: ghcr.io/adeelarshad414/daig/orders
-    newTag: latest
+    newTag: "1.0.0"
   - name: daig-kitchen
     newName: ghcr.io/adeelarshad414/daig/kitchen
-    newTag: latest
+    newTag: "1.0.0"
   - name: daig-dispatch
     newName: ghcr.io/adeelarshad414/daig/dispatch
-    newTag: latest
+    newTag: "1.0.0"
   - name: daig-web
     newName: ghcr.io/adeelarshad414/daig/web
-    newTag: latest
+    newTag: "1.0.0"

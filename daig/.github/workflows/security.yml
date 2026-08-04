@@ -40,7 +40,7 @@ jobs:
         with: { node-version: '22' }
       - working-directory: services/${{ matrix.service }}
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           # Report everything, fail only on high and above. A pipeline that
           # fails on every low finding is a pipeline people learn to ignore.
           npm audit --audit-level=high

@@ -4,3 +4,14 @@ metadata:
   name: daig
   labels:
     name: daig
+    # Pod Security Admission. `baseline` is ENFORCED (blocks privileged pods,
+    # hostNetwork/PID, hostPath, added capabilities) and works with the stock
+    # postgres/redis/nginx images. `restricted` is set to warn+audit so the
+    # stricter target is visible without rejecting the data tier's images that
+    # legitimately need to start as root. Tighten enforce to `restricted` once
+    # every image runs rootless (e.g. nginx-unprivileged, a postgres that
+    # doesn't need root at start).
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

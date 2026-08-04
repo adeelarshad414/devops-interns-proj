@@ -23,6 +23,24 @@ groups:
       - record: daig:order_latency:p95_5m
         expr: histogram_quantile(0.95, sum by (le) (rate(daig_http_request_duration_seconds_bucket{service="orders",route="/api/orders"}[5m])))
 
+  # Error ratio over several windows, for multi-window burn-rate alerting. Own
+  # group at a coarser interval — a 24h range query every 30s is needless load.
+  - name: daig-slo-burnrate
+    interval: 1m
+    rules:
+      - record: daig:order_error:ratio5m
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[5m])) / clamp_min(sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[5m])), 0.001)
+      - record: daig:order_error:ratio30m
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[30m])) / clamp_min(sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[30m])), 0.001)
+      - record: daig:order_error:ratio1h
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[1h])) / clamp_min(sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[1h])), 0.001)
+      - record: daig:order_error:ratio2h
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[2h])) / clamp_min(sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[2h])), 0.001)
+      - record: daig:order_error:ratio6h
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[6h])) / clamp_min(sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[6h])), 0.001)
+      - record: daig:order_error:ratio24h
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[24h])) / clamp_min(sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[24h])), 0.001)
+
   - name: daig-alerts
     rules:
       # Alert on symptoms the customer feels, never on causes.
@@ -43,6 +61,38 @@ groups:
           summary: "Order p95 latency is {{ $value }}s, SLO is 1s"
           description: "Check the trace before you check the code. Dispatch is the usual culprit."
 
+      # Multi-window, multi-burn-rate (Google SRE workbook). The SLO is 99.9%,
+      # so the error budget is 0.1% (0.001). Burn rate = error_ratio / 0.001.
+      # Two windows per alert: the long window says "this is real", the short
+      # window says "it's still happening now" — together they page fast on a
+      # hard outage and stay quiet on a brief blip.
+      - alert: DaigErrorBudgetFastBurn
+        expr: daig:order_error:ratio1h > 0.0144 and daig:order_error:ratio5m > 0.0144
+        for: 2m
+        labels: { severity: critical, tier: application }
+        annotations:
+          summary: "Fast burn: >14.4× error budget (1h & 5m). Budget gone in ~2 days at this rate."
+          description: "Page now. A sustained burn this fast exhausts a month of budget in hours."
+          runbook: "docs/DAY4.md#orders-failing"
+
+      - alert: DaigErrorBudgetSlowBurn
+        expr: daig:order_error:ratio6h > 0.006 and daig:order_error:ratio30m > 0.006
+        for: 15m
+        labels: { severity: critical, tier: application }
+        annotations:
+          summary: "Slow burn: >6× error budget (6h & 30m)."
+          description: "Page. Not a spike — a steady bleed that will exhaust the budget this week."
+
+      - alert: DaigErrorBudgetTicketBurn
+        expr: daig:order_error:ratio24h > 0.003 and daig:order_error:ratio2h > 0.003
+        for: 1h
+        labels: { severity: warning, tier: application }
+        annotations:
+          summary: "Elevated burn: >3× error budget (24h & 2h). Investigate before it accelerates."
+
+      # Retained as a change-freeze signal, not a pager: it's a lagging total
+      # (needs 31d retention, now configured). The burn-rate alerts above are
+      # what page. Fires when three-quarters of the monthly budget is spent.
       - alert: DaigErrorBudgetBurning
         expr: daig:error_budget_consumed:ratio30d > 0.75
         for: 10m

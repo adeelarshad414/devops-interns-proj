@@ -22,7 +22,9 @@ resource "aws_secretsmanager_secret_version" "db" {
     dbname   = var.db_name
     host     = aws_db_instance.main.address
     port     = 5432
-    url      = "postgresql://${var.db_username}:${urlencode(random_password.db.result)}@${aws_db_instance.main.address}:5432/${var.db_name}"
+    # sslmode=require forces TLS to RDS (match the Azure connection string).
+    # Enforce it server-side too via rds.force_ssl=1 in the parameter group.
+    url      = "postgresql://${var.db_username}:${urlencode(random_password.db.result)}@${aws_db_instance.main.address}:5432/${var.db_name}?sslmode=require"
   })
 }
 
@@ -30,6 +32,20 @@ resource "aws_db_subnet_group" "main" {
   name       = local.name
   subnet_ids = aws_subnet.private[*].id
   tags       = { Name = local.name }
+}
+
+# Enforce TLS at the server. sslmode=require on the client is only half the job;
+# rds.force_ssl=1 makes RDS reject any cleartext connection outright.
+resource "aws_db_parameter_group" "main" {
+  name   = local.name
+  family = "postgres16"
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"
+  }
+
+  tags = { Name = local.name }
 }
 
 resource "aws_db_instance" "main" {
@@ -48,6 +64,7 @@ resource "aws_db_instance" "main" {
   password = random_password.db.result
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
+  parameter_group_name   = aws_db_parameter_group.main.name
   vpc_security_group_ids = [aws_security_group.db.id]
   publicly_accessible    = false
 

@@ -19,6 +19,11 @@ spec:
         app: postgres
         tier: data
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           image: postgres:16-alpine
@@ -38,9 +43,21 @@ spec:
             exec: { command: ["pg_isready", "-U", "daig", "-d", "daig"] }
             initialDelaySeconds: 10
             periodSeconds: 5
+          # Liveness restarts a hung-but-listening postgres that readiness alone
+          # would only pull from the Service and leave wedged forever.
+          livenessProbe:
+            exec: { command: ["pg_isready", "-U", "daig", "-d", "daig"] }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
           resources:
-            requests: { cpu: 100m, memory: 256Mi }
-            limits:   { cpu: 1000m, memory: 1Gi }
+            # memory request == limit → not eligible for memory-pressure
+            # eviction ahead of burstable pods; cpu is allowed to burst.
+            requests: { cpu: 250m, memory: 512Mi }
+            limits:   { cpu: 1000m, memory: 512Mi }
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data

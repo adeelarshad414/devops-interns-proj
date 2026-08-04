@@ -16,6 +16,17 @@
     mode: "0640"
   notify: restart daig
 
+- name: Render the compose file
+  # The systemd unit runs `docker compose up` in this directory; without a
+  # compose file here ExecStart fails with "no configuration file".
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ daig_app_dir }}/docker-compose.yml"
+    owner: "{{ daig_service_user }}"
+    group: "{{ daig_service_user }}"
+    mode: "0640"
+  notify: restart daig
+
 - name: Install the systemd unit
   ansible.builtin.template:
     src: daig.service.j2

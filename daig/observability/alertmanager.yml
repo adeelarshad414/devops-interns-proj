@@ -1,0 +1,46 @@
+# Alertmanager routing for daig.
+#
+# The teaching point: severity decides the CHANNEL, not just the colour.
+# critical → page a human now; warning → a ticket/Slack that can wait until
+# morning. Wire the real receivers (Slack webhook, PagerDuty routing key) where
+# the placeholders are — they're left empty here so the container starts without
+# secrets. An empty receiver is valid and simply drops, which is why nothing
+# pages in the demo until you fill it in.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: pager
+      group_wait: 10s
+      repeat_interval: 1h
+    - matchers: ['severity="warning"']
+      receiver: ticket
+
+receivers:
+  - name: default
+
+  # PAGE: fill in a PagerDuty/Opsgenie integration for real paging.
+  - name: pager
+    # pagerduty_configs:
+    #   - routing_key: <PAGERDUTY_ROUTING_KEY>
+
+  # TICKET/SLACK: fill in a Slack incoming-webhook for the warning channel.
+  - name: ticket
+    # slack_configs:
+    #   - api_url: <SLACK_WEBHOOK_URL>
+    #     channel: '#daig-alerts'
+
+inhibit_rules:
+  # If orders are outright failing (critical), silence the slow-latency warning
+  # for the same tier — it's a symptom of the same incident, not a second one.
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: ['tier']

@@ -6,7 +6,9 @@ metadata:
     app: orders
     tier: application
 spec:
-  replicas: 3
+  # replicas is intentionally unset: the HorizontalPodAutoscaler owns this field.
+  # Declaring both makes every `kubectl apply -k` reset the count and fight the
+  # autoscaler — scale-down thrash exactly during the iftar spike.
   revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate
@@ -28,6 +30,15 @@ spec:
         prometheus.io/port: "3001"
         prometheus.io/path: "/metrics"
     spec:
+      # This pod makes no Kubernetes API calls; don't hand it a token.
+      automountServiceAccountToken: false
+      # Spread replicas across nodes so a single node drain can't breach the PDB.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: orders }
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

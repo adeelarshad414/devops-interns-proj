@@ -1,0 +1,46 @@
+# Managed by Ansible. Local edits are overwritten on the next run.
+#
+# Unlike the repo's root compose (which BUILDS from source), this host pulls
+# pre-built, immutably-tagged images from the registry — there is no build
+# context on a production host. Postgres is external (see DATABASE_URL in .env);
+# redis is co-located as a cache.
+name: daig
+
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redisdata:/data"]
+    <<: *hardening
+
+  orders:
+    image: {{ daig_registry }}/orders:{{ daig_image_tag }}
+    env_file: [.env]
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on: [redis]
+    <<: *hardening
+
+  kitchen:
+    image: {{ daig_registry }}/kitchen:{{ daig_image_tag }}
+    env_file: [.env]
+    <<: *hardening
+
+  dispatch:
+    image: {{ daig_registry }}/dispatch:{{ daig_image_tag }}
+    env_file: [.env]
+    <<: *hardening
+
+  web:
+    image: {{ daig_registry }}/web:{{ daig_image_tag }}
+    ports: ["80:8080"]
+    depends_on: [orders, kitchen, dispatch]
+    <<: *hardening
+
+volumes:
+  redisdata:

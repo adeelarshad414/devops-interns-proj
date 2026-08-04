@@ -6,7 +6,7 @@ metadata:
     app: kitchen
     tier: application
 spec:
-  replicas: 2
+  # replicas owned by the HorizontalPodAutoscaler (see hpa.yaml). Do not set both.
   revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate
@@ -28,6 +28,13 @@ spec:
         prometheus.io/port: "3002"
         prometheus.io/path: "/metrics"
     spec:
+      automountServiceAccountToken: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: kitchen }
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

@@ -1,11 +1,15 @@
+# TIER 3 cache. A StatefulSet (not a Deployment) with a PVC so a reschedule
+# doesn't silently wipe state — matching the compose stack's `--appendonly yes`
+# + named volume. In production this is ElastiCache / Memorystore / Azure Cache.
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis
   labels:
     app: redis
     tier: data
 spec:
+  serviceName: redis
   replicas: 1
   selector:
     matchLabels: { app: redis }
@@ -15,9 +19,17 @@ spec:
         app: redis
         tier: data
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis
           image: redis:7-alpine
+          args: ["redis-server", "--appendonly", "yes"]
           ports:
             - name: redis
               containerPort: 6379
@@ -25,15 +37,37 @@ spec:
             exec: { command: ["redis-cli", "ping"] }
             initialDelaySeconds: 3
             periodSeconds: 10
+          livenessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
           resources:
-            requests: { cpu: 20m, memory: 32Mi }
+            requests: { cpu: 20m, memory: 64Mi }
             limits:   { cpu: 200m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: redis
 spec:
+  clusterIP: None
   selector: { app: redis }
   ports:
     - name: redis

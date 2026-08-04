@@ -1,0 +1,85 @@
+# Baseline network posture: default-deny, then open only the flows the app
+# actually needs. This brings the k8s stack up to the isolation the Swarm stack
+# already has (`internal: true` data network). The chaos exercise in
+# k8s/chaos/deny-egress.yaml layers an extra, temporary block on top.
+#
+# NOTE: NetworkPolicy is only ENFORCED by a policy-aware CNI (Calico, Cilium,
+# Antrea). kind's default CNI accepts these objects but does not enforce them —
+# install Calico in the teaching cluster for the lesson to be real.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+# Every pod needs DNS, or nothing resolves and the whole namespace looks "broken"
+# for a reason that has nothing to do with the app.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+# Presentation: reachable from anywhere (the LoadBalancer/Ingress) on 8080;
+# may talk only to the application tier.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web
+spec:
+  podSelector:
+    matchLabels: { tier: presentation }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - { protocol: TCP, port: 8080 }
+  egress:
+    - to:
+        - podSelector: { matchLabels: { tier: application } }
+---
+# Application: reachable from web and from peer app services; may reach the data
+# tier and the OTLP collector, plus peer app services (orders→kitchen→dispatch).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: application
+spec:
+  podSelector:
+    matchLabels: { tier: application }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { tier: presentation } }
+        - podSelector: { matchLabels: { tier: application } }
+  egress:
+    - to:
+        - podSelector: { matchLabels: { tier: data } }
+    - to:
+        - podSelector: { matchLabels: { tier: application } }
+    # OTLP export (collector may live in an observability namespace).
+    - ports:
+        - { protocol: TCP, port: 4317 }
+        - { protocol: TCP, port: 4318 }
+---
+# Data: reachable only from the application tier. No egress but DNS (above).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: data
+spec:
+  podSelector:
+    matchLabels: { tier: data }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { tier: application } }

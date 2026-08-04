@@ -3,10 +3,12 @@
 # ---------- deps ----------
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY services/orders/package.json ./services/orders/
+COPY services/orders/package.json services/orders/package-lock.json ./services/orders/
 COPY services/_shared/package.json ./services/_shared/
 WORKDIR /app/services/orders
-RUN npm install --omit=dev --no-audit --no-fund
+# npm ci installs from the committed lockfile: reproducible, and it fails loudly
+# if package.json and the lock have drifted. Never `npm install` in a build.
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # ---------- runtime base ----------
 FROM node:22-alpine AS base

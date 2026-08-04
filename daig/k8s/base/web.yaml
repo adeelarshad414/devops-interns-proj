@@ -6,7 +6,7 @@ metadata:
     app: web
     tier: presentation
 spec:
-  replicas: 2
+  # replicas owned by the HorizontalPodAutoscaler (see hpa.yaml). Do not set both.
   selector:
     matchLabels: { app: web }
   template:
@@ -15,12 +15,28 @@ spec:
         app: web
         tier: presentation
     spec:
+      automountServiceAccountToken: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: web }
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: web
           image: daig-web:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 8080
+          # Startup gives a slow first boot room before liveness starts killing.
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
           readinessProbe:
             httpGet: { path: /healthz, port: http }
             initialDelaySeconds: 3
@@ -32,15 +48,32 @@ spec:
           resources:
             requests: { cpu: 20m, memory: 32Mi }
             limits:   { cpu: 200m, memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: web
 spec:
+  # ClusterIP + Ingress is the production shape (TLS termination, host/path
+  # routing, one LB for the cluster). A raw LoadBalancer per service means no
+  # TLS and one cloud LB each. See ingress.yaml — enable it once an ingress
+  # controller (and cert-manager) are installed; until then keep LoadBalancer
+  # for a controller-free demo cluster.
   type: LoadBalancer
   selector: { app: web }
   ports:
     - name: http
       port: 80
       targetPort: http
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: web

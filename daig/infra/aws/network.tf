@@ -15,6 +15,49 @@ resource "aws_vpc" "main" {
   tags = { Name = local.name }
 }
 
+# VPC flow logs. Without them, "what talked to what, and when" is unanswerable
+# after an incident. Captures all traffic metadata to CloudWatch.
+resource "aws_cloudwatch_log_group" "flow" {
+  name              = "/daig/${var.environment}/vpc-flow"
+  retention_in_days = 30
+  tags              = { Name = "${local.name}-flow" }
+}
+
+resource "aws_iam_role" "flow" {
+  name = "${local.name}-flow"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "vpc-flow-logs.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "flow" {
+  name = "${local.name}-flow"
+  role = aws_iam_role.flow.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogGroups", "logs:DescribeLogStreams"]
+      Resource = "${aws_cloudwatch_log_group.flow.arn}:*"
+    }]
+  })
+}
+
+resource "aws_flow_log" "main" {
+  vpc_id                   = aws_vpc.main.id
+  traffic_type             = "ALL"
+  log_destination_type     = "cloud-watch-logs"
+  log_destination          = aws_cloudwatch_log_group.flow.arn
+  iam_role_arn             = aws_iam_role.flow.arn
+  max_aggregation_interval = 600
+  tags                     = { Name = "${local.name}-flow" }
+}
+
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "${local.name}-igw" }

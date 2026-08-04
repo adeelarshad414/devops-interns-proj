@@ -104,7 +104,7 @@ jobs:
       - name: npm audit
         working-directory: services/${{ matrix.service }}
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           # Fail on high and above. A gate that fires on every low finding is a
           # gate people learn to ignore, which is worse than no gate.
           npm audit --audit-level=high
@@ -139,7 +139,10 @@ jobs:
           category: trivy-config
 
       - name: Checkov
-        uses: bridgecrewio/checkov-action@master
+        # Never pin a CI action to a moving branch. Dependabot (github-actions
+        # ecosystem) bumps this; for stricter supply-chain posture pin to the
+        # release commit SHA instead of the tag.
+        uses: bridgecrewio/checkov-action@v12.1347.0
         continue-on-error: true
         with:
           directory: infra/

@@ -32,3 +32,47 @@ spec:
         - type: Percent
           value: 25
           periodSeconds: 60
+---
+# The spike propagates orders → kitchen → dispatch. If only orders scales, a
+# fixed-size kitchen/dispatch becomes the bottleneck the moment orders fans out.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: kitchen
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: kitchen }
+  minReplicas: 2
+  maxReplicas: 12
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 60 }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dispatch
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: dispatch }
+  minReplicas: 2
+  maxReplicas: 12
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 60 }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: web }
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }

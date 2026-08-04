@@ -1,4 +1,10 @@
 ---
+- name: Ensure the apt keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
 - name: Add the Docker apt key
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
@@ -7,8 +13,9 @@
 
 - name: Add the Docker repository
   ansible.builtin.apt_repository:
+    # arch is derived from the host, so this works on both amd64 and arm64.
     repo: >-
-      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      deb [arch={{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }} signed-by=/etc/apt/keyrings/docker.asc]
       https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     filename: docker
     state: present

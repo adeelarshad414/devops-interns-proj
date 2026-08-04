@@ -24,6 +24,8 @@ resource "google_sql_database_instance" "main" {
       ipv4_enabled                                  = false
       private_network                               = google_compute_network.main.id
       enable_private_path_for_google_cloud_services = true
+      # Reject any non-TLS connection at the server (match Azure's posture).
+      ssl_mode                                      = "ENCRYPTED_ONLY"
     }
 
     backup_configuration {
@@ -70,5 +72,5 @@ resource "google_secret_manager_secret" "db_url" {
 
 resource "google_secret_manager_secret_version" "db_url" {
   secret      = google_secret_manager_secret.db_url.id
-  secret_data = "postgresql://daig:${urlencode(random_password.db.result)}@${google_sql_database_instance.main.private_ip_address}:5432/daig"
+  secret_data = "postgresql://daig:${urlencode(random_password.db.result)}@${google_sql_database_instance.main.private_ip_address}:5432/daig?sslmode=require"
 }

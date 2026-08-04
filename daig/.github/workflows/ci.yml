@@ -78,11 +78,11 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: services/${{ matrix.service }}/package.json
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
 
       - name: Install
         working-directory: services/${{ matrix.service }}
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Test
         working-directory: services/${{ matrix.service }}
@@ -113,15 +113,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          # Immutable :<sha> always; the mutable :latest only tracks the default
+          # branch, so a feature branch can never move :latest out from under a
+          # deploy. Rollback targets a specific sha, never "latest".
+          tags: |
+            type=raw,value=${{ github.sha }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Build and conditionally push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: services/${{ matrix.service }}/Dockerfile
           push: ${{ github.event_name == 'push' }}
-          tags: |
-            ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: true
