@@ -1,0 +1,22 @@
+---
+# Registered dummies - see DUMMY-VALUES.md. In production these come from
+# ansible-vault or, better, from the cloud secret store at runtime.
+daig_db_name: daig
+daig_db_user: daig
+daig_db_password: CHANGE_ME_DEV_ONLY
+
+node_major_version: 22
+docker_compose_version: v2.29.7
+
+daig_app_dir: /opt/daig
+daig_service_user: daig
+
+# Sysctl tuning for the iftar spike. Default somaxconn is 4096 on modern
+# kernels but the backlog is what actually drops connections under a burst,
+# so it is worth being explicit rather than inheriting a default.
+tuned_sysctl:
+  net.core.somaxconn: 8192
+  net.ipv4.tcp_max_syn_backlog: 8192
+  net.ipv4.ip_local_port_range: "10240 65535"
+  vm.swappiness: 10
+  fs.file-max: 200000

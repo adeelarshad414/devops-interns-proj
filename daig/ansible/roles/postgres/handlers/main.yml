@@ -1,0 +1,10 @@
+---
+- name: reload postgres
+  ansible.builtin.service:
+    name: postgresql
+    state: reloaded
+
+- name: restart postgres
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted

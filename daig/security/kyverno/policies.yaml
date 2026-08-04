@@ -1,0 +1,136 @@
+# Kyverno admission policies - the same rules as security/policy/kubernetes.rego,
+# enforced at the API server instead of in CI.
+#
+# WHY BOTH. Conftest catches it in the pull request, where the fix is cheap and
+# the author is still thinking about the code. Kyverno catches it at admission,
+# where somebody has bypassed CI - `kubectl apply` from a laptop, a Helm chart
+# from a vendor, an operator creating pods on your behalf.
+#
+# Shift left AND enforce at the gate. Neither replaces the other, and the reason
+# is worth ten minutes: CI protects you from mistakes, admission control
+# protects you from bypass.
+#
+# Install: kubectl apply -f https://github.com/kyverno/kyverno/releases/latest/download/install.yaml
+# Then:    kubectl apply -f security/kyverno/policies.yaml
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: daig-pod-security
+  annotations:
+    policies.kyverno.io/title: Daig pod security baseline
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-non-root
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      validate:
+        message: "Containers must run as non-root. Set runAsNonRoot: true."
+        pattern:
+          spec:
+            =(securityContext):
+              =(runAsNonRoot): "true"
+            containers:
+              - =(securityContext):
+                  =(allowPrivilegeEscalation): "false"
+
+    - name: require-resource-limits
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      validate:
+        message: "Every container needs CPU and memory limits. One leaking pod should not be able to evict its neighbours."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    memory: "?*"
+                    cpu: "?*"
+
+    - name: disallow-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      validate:
+        message: "Image tag :latest is not allowed. You cannot roll back to a tag that moves."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+
+    - name: require-readiness-probe
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      validate:
+        message: "Every container needs a readinessProbe."
+        pattern:
+          spec:
+            containers:
+              - readinessProbe:
+                  {}
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: daig-require-signed-images
+  annotations:
+    policies.kyverno.io/title: Only run images we signed
+spec:
+  validationFailureAction: Audit   # start in Audit, move to Enforce once green
+  background: false
+  rules:
+    - name: verify-cosign-signature
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/adeelarshad414/daig/*"
+          attestors:
+            - entries:
+                - keyless:
+                    # Keyless signing: the identity is the GitHub Actions
+                    # workflow itself, so a signature proves WHICH pipeline
+                    # built the image. No key to steal, rotate, or leak.
+                    subject: "https://github.com/adeelarshad414/daig/.github/workflows/devsecops.yml@refs/heads/main"
+                    issuer: "https://token.actions.githubusercontent.com"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: daig-add-default-labels
+  annotations:
+    policies.kyverno.io/title: Mutate - add cost attribution
+spec:
+  rules:
+    - name: add-cost-labels
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      mutate:
+        # Kyverno does more than block: it can fix. This is the platform
+        # engineer's move from the kickoff deck - do not ask people to
+        # remember, make the correct thing happen by default.
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(cost-centre): training
+              +(managed-by): kyverno

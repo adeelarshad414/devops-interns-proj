@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: daig
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - postgres.yaml
+  - redis.yaml
+  - orders.yaml
+  - kitchen.yaml
+  - dispatch.yaml
+  - web.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: daig
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: daig-orders
+    newName: ghcr.io/adeelarshad414/daig/orders
+    newTag: latest
+  - name: daig-kitchen
+    newName: ghcr.io/adeelarshad414/daig/kitchen
+    newTag: latest
+  - name: daig-dispatch
+    newName: ghcr.io/adeelarshad414/daig/dispatch
+    newTag: latest
+  - name: daig-web
+    newName: ghcr.io/adeelarshad414/daig/web
+    newTag: latest

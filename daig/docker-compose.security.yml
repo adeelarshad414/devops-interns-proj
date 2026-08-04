@@ -1,0 +1,65 @@
+# DevSecOps overlay.
+#   docker compose -f docker-compose.yml -f docker-compose.security.yml up -d
+#
+# OpenBao is the "right answer" that the rest of the repo's registered-dummy
+# discipline is a stand-in for. Showing both side by side is what makes the
+# lesson land: here is the compromise we make locally, and here is what
+# production actually does.
+
+services:
+  # ---------------- secrets management ----------------
+  openbao:
+    # OpenBao is the Linux Foundation fork of Vault. Same API, same CLI verbs,
+    # open licence. If your organisation uses Vault, everything here transfers.
+    image: openbao/openbao:2.0.0
+    cap_add: [IPC_LOCK]
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: CHANGE_ME_DEV_ONLY
+      BAO_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      BAO_ADDR: http://127.0.0.1:8200
+    command: ["server", "-dev"]
+    ports: ["8200:8200"]
+    healthcheck:
+      test: ["CMD", "bao", "status"]
+      interval: 10s
+      retries: 10
+    # -dev mode keeps everything in memory and auto-unseals. Convenient for
+    # teaching and completely unsuitable for anything else. Say so.
+
+  # ---------------- runtime security ----------------
+  falco:
+    # Detects things that happen AFTER deployment: a shell spawned inside a
+    # container, an unexpected outbound connection, a write to /etc.
+    #
+    # Everything else in this repo is pre-deployment. Falco is the answer to
+    # "what if something gets through anyway", and that gap is worth naming.
+    image: falcosecurity/falco:0.38.2
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - /proc:/host/proc:ro
+      - ./security/falco/rules.yaml:/etc/falco/rules.d/daig.yaml:ro
+    environment:
+      FALCO_BPF_PROBE: ""
+    # Requires kernel access; may not work on Docker Desktop for macOS.
+    # If it does not start, treat it as DEMO-only and show a recorded run.
+    profiles: [runtime]
+
+  # ---------------- DAST ----------------
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    command:
+      - zap-baseline.py
+      - -t
+      - http://web:8080
+      - -c
+      - /zap/wrk/rules.tsv
+      - -r
+      - /zap/wrk/report.html
+      - -J
+      - /zap/wrk/report.json
+      - -I    # do not fail on WARN, only on FAIL rules
+    volumes:
+      - ./security/zap:/zap/wrk:rw
+    depends_on: [web]
+    profiles: [dast]

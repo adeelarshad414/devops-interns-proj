@@ -1,0 +1,84 @@
+# Observability overlay. Compose with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.obs.yml up -d
+#
+# Metrics  -> Prometheus       (Mimir in production; see observability/README.md)
+# Logs     -> Promtail -> Loki
+# Traces   -> OTel Collector -> Tempo
+# Profiles -> Pyroscope
+# All four -> Grafana
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.109.0
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus exporter for collector's own metrics
+    depends_on: [tempo]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=24h
+      - --web.enable-lifecycle
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/rules:/etc/prometheus/rules:ro
+      - promdata:/prometheus
+    ports: ["9090:9090"]
+
+  loki:
+    image: grafana/loki:3.1.1
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./observability/loki.yaml:/etc/loki/loki.yaml:ro
+      - lokidata:/loki
+    ports: ["3100:3100"]
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    command: ["-config.file=/etc/promtail/promtail.yaml"]
+    volumes:
+      - ./observability/promtail.yaml:/etc/promtail/promtail.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on: [loki]
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempodata:/var/tempo
+    ports: ["3200:3200"]
+
+  pyroscope:
+    image: grafana/pyroscope:1.7.1
+    ports: ["4040:4040"]
+    volumes: ["pyroscopedata:/data"]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: CHANGE_ME_DEV_ONLY
+      GF_USERS_DEFAULT_THEME: dark
+      GF_FEATURE_TOGGLES_ENABLE: traceToMetrics,traceToProfiles
+      GF_INSTALL_PLUGINS: grafana-pyroscope-app
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+    ports: ["3000:3000"]
+    depends_on: [prometheus, loki, tempo, pyroscope]
+
+volumes:
+  promdata:
+  lokidata:
+  tempodata:
+  pyroscopedata:
+  grafanadata:

@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Daig pre-commit hook.
+#
+# Install:  cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# The same checks CI runs, two seconds instead of three minutes. That ratio is
+# the whole argument for shifting left, and it is more persuasive felt than
+# explained.
+set -euo pipefail
+
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+echo "pre-commit: checking $(echo "$staged" | wc -l | tr -d ' ') staged file(s)"
+
+# 1. JavaScript syntax
+for f in $staged; do
+  case "$f" in
+    *.js)
+      node --check "$f" || { echo "  syntax error: $f"; fail=1; } ;;
+  esac
+done
+
+# 2. Shell syntax
+for f in $staged; do
+  case "$f" in
+    *.sh) bash -n "$f" || { echo "  shell syntax error: $f"; fail=1; } ;;
+  esac
+done
+
+# 3. YAML parses
+for f in $staged; do
+  case "$f" in
+    *.yml|*.yaml)
+      python3 -c "import sys,yaml; list(yaml.safe_load_all(open('$f')))" \
+        || { echo "  invalid YAML: $f"; fail=1; } ;;
+  esac
+done
+
+# 4. Registered dummy values outside the allowed files
+for f in $staged; do
+  case "$f" in
+    .env.example|DUMMY-VALUES.md|docker-compose.obs.yml|docker-compose.sonar.yml|docs/*|k8s/base/secret.yaml|swarm/*|ansible/group_vars/*)
+      continue ;;
+  esac
+  if grep -q 'CHANGE_ME_DEV_ONLY' "$f" 2>/dev/null; then
+    echo "  registered dummy value in $f - see DUMMY-VALUES.md"
+    fail=1
+  fi
+done
+
+# 5. Anything that looks like a real secret
+if git diff --cached | grep -nEi \
+   '(aws_secret_access_key|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36})'; then
+  echo "  possible real credential in the diff. Refusing the commit."
+  fail=1
+fi
+
+# 6. Conventional commit reminder (advisory only - do not block)
+if [ -f .git/COMMIT_EDITMSG ]; then
+  head -1 .git/COMMIT_EDITMSG | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .+' \
+    || echo "  note: message does not look like a conventional commit"
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "pre-commit: FAILED. Fix the above, or --no-verify if you know what you are doing."
+  exit 1
+fi
+
+echo "pre-commit: passed"

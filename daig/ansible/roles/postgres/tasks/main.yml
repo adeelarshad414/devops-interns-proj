@@ -1,0 +1,55 @@
+---
+- name: Install PostgreSQL and the Python client
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+    update_cache: true
+
+- name: Ensure PostgreSQL is running
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Create the application database
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ daig_db_name }}"
+    state: present
+
+- name: Create the application role
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    db: "{{ daig_db_name }}"
+    name: "{{ daig_db_user }}"
+    password: "{{ daig_db_password }}"
+    role_attr_flags: LOGIN
+    state: present
+  no_log: true    # never print a password into the run output
+
+- name: Grant schema privileges
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: "{{ daig_db_name }}"
+    role: "{{ daig_db_user }}"
+    type: schema
+    objs: public
+    privs: CREATE,USAGE
+    state: present
+
+- name: Allow the application tier to connect
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/16/main/pg_hba.conf
+    line: "host {{ daig_db_name }} {{ daig_db_user }} {{ hostvars['app-01'].ansible_host }}/32 scram-sha-256"
+    state: present
+  notify: reload postgres
+
+- name: Listen on the private interface
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/16/main/postgresql.conf
+    regexp: "^#?listen_addresses"
+    line: "listen_addresses = '*'"
+  notify: restart postgres

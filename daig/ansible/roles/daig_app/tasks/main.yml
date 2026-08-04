@@ -1,0 +1,33 @@
+---
+- name: Ensure the application directory exists
+  ansible.builtin.file:
+    path: "{{ daig_app_dir }}"
+    state: directory
+    owner: "{{ daig_service_user }}"
+    group: "{{ daig_service_user }}"
+    mode: "0750"
+
+- name: Render the environment file
+  ansible.builtin.template:
+    src: daig.env.j2
+    dest: "{{ daig_app_dir }}/.env"
+    owner: "{{ daig_service_user }}"
+    group: "{{ daig_service_user }}"
+    mode: "0640"
+  notify: restart daig
+
+- name: Install the systemd unit
+  ansible.builtin.template:
+    src: daig.service.j2
+    dest: /etc/systemd/system/daig.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart daig
+
+- name: Ensure the service is enabled
+  ansible.builtin.systemd:
+    name: daig
+    enabled: true
+    state: started
+    daemon_reload: true

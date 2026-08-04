@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in Daig does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: check `VERIFICATION.md`. Large parts of this repository
+        are syntax-checked but never executed, so "it does not run" may be a
+        known-unverified area rather than a regression.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - services (orders / kitchen / dispatch / web)
+        - docker compose
+        - observability
+        - vault / OpenBao
+        - security scanning
+        - terraform (aws / gcp / azure)
+        - kubernetes / swarm
+        - ansible
+        - docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Include the actual error and the exit code
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Commands to reproduce
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "macOS 15 / Docker Desktop 4.34 / arm64"

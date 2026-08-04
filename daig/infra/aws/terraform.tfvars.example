@@ -1,0 +1,7 @@
+region      = "eu-west-1"
+environment = "dev"
+vpc_cidr    = "10.20.0.0/16"
+az_count    = 2
+
+# db.t4g.micro is the cheapest instance class that runs Postgres 16 acceptably.
+db_instance_class = "db.t4g.micro"

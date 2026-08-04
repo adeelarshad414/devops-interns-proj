@@ -1,0 +1,85 @@
+# Progress
+
+Living source of truth. Verify at the start of any work session, update at the
+end. Do not delete rows.
+
+## Built
+
+| Area | Files | Static checks | Executed |
+|---|---|---|---|
+| Root docs, Makefile, env template, gitignore | 7 | n/a | — |
+| Database schema + reference seed | 2 | — | **no** |
+| Shared libs (guard, telemetry, metrics, logger, db) | 6 | `node --check` clean | **no** |
+| Tier 2 services (orders, kitchen, dispatch) | 11 | `node --check` clean | **no** |
+| Tier 1 web (nginx + zero-build SPA) | 5 | — | **no** |
+| Dockerfiles incl. `:broken` target | 4 | — | **no** |
+| Compose: base, observability, sonarqube | 3 | YAML parses | **no** |
+| Observability stack (OTel, Prom, Loki, Promtail, Tempo, Pyroscope, Grafana) | 10 | YAML + JSON parse | **no** |
+| SLO recording rules and 4 alerts | 1 | YAML parses | **no** |
+| GitHub Actions: ci, cd, security, quality | 4 | YAML parses | **no** |
+| SonarQube scanner config | 1 | — | **no** |
+| Scripts (smoke, seed, integration) | 3 | `bash -n` clean | **no** |
+| Load generator (iftar spike, zero deps) | 1 | `node --check` clean | **no** |
+| Chaos scripts, 5 days | 5 | `bash -n` clean | **no** |
+| Git pre-commit hook | 1 | `bash -n` clean | **no** |
+| Docker Swarm stack | 1 | YAML parses | **no** |
+| Kubernetes manifests | 11 | YAML parses | **no** |
+| Ansible: 4 roles, inventory, templates | 13 | YAML parses | **no** |
+| Terraform AWS | 9 | brace/paren balance only | **no** |
+| Terraform GCP | 6 | brace/paren balance only | **no** |
+| Terraform Azure | 6 | brace/paren balance only | **no** |
+| DevSecOps: vulnerable module (6 CWEs, gated) | 1 | `node --check` clean | **no** |
+| DevSecOps: semgrep rules, OPA policies ×3, Kyverno, ZAP, Falco | 7 | YAML parses | **no** |
+| DevSecOps: scan-all, sign-and-verify, vault-demo, day6 chaos | 4 | `bash -n` clean | **no** |
+| DevSecOps: compose overlay (OpenBao, ZAP, Falco) | 1 | YAML parses | **no** |
+| DevSecOps: `devsecops.yml` 7-gate pipeline | 1 | YAML parses | **no** |
+| OpenBao: server config, 4 policies, agent, bootstrap, demo, README | 9 | `bash -n` + link check | **no** |
+| `secrets.js` + service bootstrap/app split (6 files) | 7 | `node --check` clean | **no** |
+| Git hygiene: LICENSE, CONTRIBUTING, SECURITY, CHANGELOG, CODEOWNERS, templates, dependabot, editorconfig, gitattributes, nvmrc, init-repo | 14 | YAML parses, `bash -n` clean | **no** |
+| README with 8 mermaid diagrams | 1 | fences balanced, 0 broken links | — |
+| Docs: ARCHITECTURE, REQUIREMENTS, DEPLOYMENT | 3 | link check clean | — |
+| Docs: 5 days + instructor + git + networks/volumes + swarm + sonar + coverage + devsecops | 12 | n/a | — |
+
+## Blocking before Monday
+
+| # | Item | Owner | Status |
+|---|---|---|---|
+| 1 | `make up` end to end; fix OTel/npm version drift | | **open** |
+| 2 | Build + publish `tkxel/daig-orders:broken`; confirm exit 78 | | **open** |
+| 3 | Confirm a trace crosses all three services in Tempo | | **open** |
+| 4 | `terraform init && validate` on at least the AWS stack | | **open** |
+| 5 | Cloud sandbox with spend cap and budget alert | | **open** |
+| 6 | Confirm interns have Docker + admin rights on their laptops | | **open** |
+| 7 | Decide which cloud is the hands-on one (see `docs/COVERAGE.md`) | | **open** |
+| 8 | Local Pakistani outage for the kickoff cold open, slide 5 | | **open** |
+| 9 | Run `./security/scan-all.sh` once; triage the real findings before interns see them | | **open** |
+| 10 | Confirm `chaos/day6-security.sh verify` correctly detects fixed vs unfixed | | **open** |
+| 11 | Decide five days vs six (see `docs/COVERAGE.md`) — DevSecOps needs the extra day | | **open** |
+| 12 | Run `make vault-up` and confirm bootstrap completes; expect CLI flag fixes | | **open** |
+| 13 | Run `make vault-app` and confirm logs say `credential_source":"openbao"` | | **open** |
+| 14 | `./scripts/init-repo.sh <remote>` then push; set branch protection + secret scanning | | **open** |
+| 15 | Replace placeholder handles in `.github/CODEOWNERS` | | **open** |
+
+## Open design questions
+
+| # | Question | Recommendation |
+|---|---|---|
+| 1 | Nineteen skills, five days | See `docs/COVERAGE.md`. Assign depths, do not pretend all are hands-on. |
+| 2 | Day 4 is overloaded | Either use the pre-built-pipeline de-scope lever, or split into Day 4a/4b if a sixth day exists. |
+| 3 | Which cloud hands-on | Whichever tkxel bills the most hours on. Read the other two. |
+| 4 | Swarm before or instead of Kubernetes | Before, for 90 minutes, then Kubernetes. Translation table in `docs/SWARM.md`. |
+| 5 | Where DevSecOps goes | Its own day, between CI/CD and Kubernetes. Option A in `docs/COVERAGE.md`. |
+| 6 | Falco on macOS | Needs kernel access; may not run on Docker Desktop. Treat as DEMO with a recorded run rather than losing 20 minutes. |
+
+## Deliberately not built
+
+| Item | Why |
+|---|---|
+| TLS on the AWS ALB | TODO in `loadbalancer.tf`. Plain HTTP is fine in a training VPC and nowhere else. tfsec flags it, correctly. |
+| Real CD rollout commands | `cd.yml` has structure and per-platform TODOs. The mechanism depends on which cloud you use. |
+| React frontend | Deliberate. A Vite build is one more thing that can fail at 09:30. Swap path is documented in `services/web/Dockerfile`. |
+| Kubernetes secrets operator | `k8s/base/secret.yaml` is a labelled teaching artifact. Production needs External Secrets or a CSI driver. |
+| Tests beyond `orders` | CI has a matrix ready for all three. Writing them is a good intern task, not instructor work. |
+| Local Pakistani outage | Not inventable. Needs a real incident, sourceable out loud. |
+| Fixes for the six vulnerabilities | Deliberate. The correct implementation sits in a comment under each one. Interns write the fix; that is the exercise. |
+| The 6th Semgrep rule | `daig-direct-pool-query` is a stub with instructions. Interns write it, then discover the codebase breaks its own convention in one place. |

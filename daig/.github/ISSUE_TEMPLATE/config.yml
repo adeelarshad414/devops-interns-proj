@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Verification status
+    url: https://github.com/adeelarshad414/daig/blob/main/VERIFICATION.md
+    about: Check whether the area you are reporting has actually been executed yet
+  - name: Instructor notes
+    url: https://github.com/adeelarshad414/daig/blob/main/docs/INSTRUCTOR.md
+    about: Answers to the chaos exercises. Interns should not read this.

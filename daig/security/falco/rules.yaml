@@ -1,0 +1,81 @@
+# Falco rules for Daig.
+#
+# Runtime detection answers a different question from every other tool in this
+# repo. Scanners ask "is this code safe to deploy?" Falco asks "is something
+# happening right now that should not be?"
+#
+# Both matter. A supply-chain compromise passes every pre-deploy gate by
+# definition - that is what makes it a supply-chain compromise.
+
+- macro: daig_container
+  condition: container.image.repository contains "daig"
+
+- rule: Shell spawned in a Daig container
+  desc: >-
+    Our containers run one Node process and nothing else. An interactive shell
+    means either a human debugging in production, which should be an incident
+    of its own, or something worse.
+  condition: >
+    spawned_process and daig_container and
+    proc.name in (bash, sh, ash, dash, zsh, csh)
+  output: >-
+    Shell in Daig container (user=%user.name container=%container.name
+    image=%container.image.repository proc=%proc.cmdline parent=%proc.pname)
+  priority: WARNING
+  tags: [container, shell, mitre_execution]
+
+- rule: Write below etc in a Daig container
+  desc: >-
+    Our containers run with readOnlyRootFilesystem. A successful write to /etc
+    means that control is not actually in force.
+  condition: >
+    open_write and daig_container and fd.name startswith /etc
+  output: >-
+    Write below /etc in Daig container (file=%fd.name container=%container.name
+    proc=%proc.cmdline)
+  priority: ERROR
+  tags: [filesystem, mitre_persistence]
+
+- rule: Package manager run in a Daig container
+  desc: >-
+    Installing software at runtime means the image is not what is running, and
+    your SBOM is now fiction.
+  condition: >
+    spawned_process and daig_container and
+    proc.name in (apk, apt, apt-get, npm, pip, pip3, yum, dnf)
+  output: >-
+    Package manager in running container (proc=%proc.cmdline
+    container=%container.name)
+  priority: ERROR
+  tags: [container, mitre_persistence]
+
+- rule: Outbound connection to a non-allowlisted host
+  desc: >-
+    Daig talks to its own services, its database and the OTLP collector.
+    Anything else is worth knowing about - this is the detection that catches
+    a compromised dependency phoning home.
+  condition: >
+    outbound and daig_container and
+    not fd.sip in (daig_allowed_ips) and
+    not fd.sport in (5432, 6379, 4317, 4318, 3001, 3002, 3003)
+  output: >-
+    Unexpected outbound connection (dest=%fd.rip:%fd.rport
+    container=%container.name proc=%proc.cmdline)
+  priority: NOTICE
+  tags: [network, mitre_exfiltration]
+
+- list: daig_allowed_ips
+  items: ["127.0.0.1"]
+
+- rule: Cloud metadata endpoint accessed from a Daig container
+  desc: >-
+    169.254.169.254 is the instance metadata service. An application reaching
+    it unexpectedly is the signature of SSRF being exploited for credentials -
+    exactly VULN-6 in services/orders/src/insecure.js.
+  condition: >
+    outbound and daig_container and fd.rip = "169.254.169.254"
+  output: >-
+    IMDS access from application container (container=%container.name
+    proc=%proc.cmdline) - possible SSRF exploitation
+  priority: CRITICAL
+  tags: [network, mitre_credential_access]

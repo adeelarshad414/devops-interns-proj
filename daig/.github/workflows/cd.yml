@@ -1,0 +1,108 @@
+name: CD
+
+# Progressive delivery. This workflow exists to make the CrowdStrike lesson
+# structural rather than rhetorical: you cannot reach 100% of users from here
+# without passing through 10% first, and every stage can halt the rollout.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        required: true
+      image_tag:
+        description: Image tag to deploy (commit sha)
+        required: true
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write   # OIDC to the cloud. No long-lived cloud keys in secrets.
+
+concurrency:
+  group: cd-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false   # never cancel a rollout mid-flight
+
+jobs:
+  guard:
+    name: Deployment window guard
+    runs-on: ubuntu-latest
+    outputs:
+      allowed: ${{ steps.check.outputs.allowed }}
+    steps:
+      - id: check
+        name: Refuse deploys inside the iftar window
+        run: |
+          set -euo pipefail
+          # This is the platform engineer's answer from the kickoff deck:
+          # do not ask people to remember, make it structurally impossible.
+          HOUR=$(TZ=Asia/Karachi date +%H)
+          DOW=$(TZ=Asia/Karachi date +%u)
+          if [ "$HOUR" -ge 16 ] && [ "$HOUR" -lt 21 ]; then
+            echo "::error::Deploy blocked. 16:00-21:00 PKT is the iftar peak window."
+            echo "Override requires a documented change request."
+            exit 1
+          fi
+          if [ "$DOW" -ge 5 ]; then
+            echo "::warning::Weekend deploy. Confirm someone is actually on call."
+          fi
+          echo "allowed=true" >> "$GITHUB_OUTPUT"
+
+  canary:
+    name: Canary - 10%
+    needs: guard
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to 10% of traffic
+        run: |
+          echo "TODO: replace with your rollout mechanism."
+          echo "  Kubernetes : kubectl argo rollouts set image / Flagger"
+          echo "  ECS        : CodeDeploy blue-green with a 10% test listener"
+          echo "  Cloud Run  : gcloud run services update-traffic --to-revisions=NEW=10"
+          echo "  Container Apps: az containerapp ingress traffic set --revision-weight NEW=10"
+
+      - name: Watch the SLO for 5 minutes
+        run: |
+          set -euo pipefail
+          # A canary you do not measure is just a slow deploy.
+          # Replace with a real query against your Prometheus/Mimir.
+          echo "Querying error rate and p95 for 5 minutes..."
+          for i in $(seq 1 5); do
+            echo "  minute $i: TODO query daig:order_availability:ratio5m"
+            sleep 5
+          done
+          echo "canary healthy"
+
+  rollout:
+    name: Full rollout - 100%
+    needs: canary
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - name: Promote to 100%
+        run: echo "TODO: promote canary to full traffic"
+
+      - name: Record the deployment
+        run: |
+          echo "TODO: annotate Grafana with the deploy marker."
+          echo "Every dashboard should show WHEN you deployed. Half of all"
+          echo "incident diagnosis is 'what changed, and when'."
+
+  rollback:
+    name: Rollback
+    if: failure()
+    needs: [canary, rollout]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revert to previous revision
+        run: |
+          echo "TODO: shift traffic back to the previous revision."
+          echo "Rollback must be one step and must not require a rebuild."

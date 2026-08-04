@@ -1,0 +1,155 @@
+name: CI
+
+# The Day 4 lesson lives in this file: a pipeline's most valuable behaviour is
+# REFUSING to deploy. Break a test and watch the build stop.
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Syntax check every JS file
+        run: |
+          set -euo pipefail
+          find services load scripts -name '*.js' -print0 \
+            | xargs -0 -n1 node --check
+          echo "javascript syntax clean"
+
+      - name: Syntax check every shell script
+        run: |
+          set -euo pipefail
+          find . -name '*.sh' -not -path './node_modules/*' -print0 \
+            | xargs -0 -n1 bash -n
+          echo "shell syntax clean"
+
+      - name: Parse every YAML document
+        run: |
+          python3 -c "
+          import yaml, glob, sys
+          fail = 0
+          for f in glob.glob('**/*.y*ml', recursive=True):
+              try: list(yaml.safe_load_all(open(f)))
+              except Exception as e:
+                  print('FAIL', f, e); fail = 1
+          sys.exit(fail)"
+
+      - name: Refuse registered dummy values outside .env.example
+        run: |
+          set -euo pipefail
+          if grep -rn --exclude-dir=.git --exclude=DUMMY-VALUES.md \
+               --exclude=.env.example --exclude=docker-compose.obs.yml \
+               --exclude-dir=docs \
+               'CHANGE_ME_DEV_ONLY' . ; then
+            echo "::error::Registered dummy value found outside the allowed files."
+            echo "See DUMMY-VALUES.md."
+            exit 1
+          fi
+          echo "no stray dummy values"
+
+  test:
+    name: Unit tests - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [orders, kitchen, dispatch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: services/${{ matrix.service }}/package.json
+
+      - name: Install
+        working-directory: services/${{ matrix.service }}
+        run: npm install --no-audit --no-fund
+
+      - name: Test
+        working-directory: services/${{ matrix.service }}
+        run: |
+          if [ -d test ]; then npm test; else echo "no tests yet for ${{ matrix.service }}"; fi
+
+  build:
+    name: Build image - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [static, test]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [orders, kitchen, dispatch, web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and conditionally push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+  integration:
+    name: Integration - full stack
+    runs-on: ubuntu-latest
+    needs: [static, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Bring the stack up
+        run: docker compose up -d --build --wait --wait-timeout 180
+
+      - name: Smoke test every tier
+        run: ./scripts/smoke.sh
+
+      - name: Place a real order through all three services
+        run: ./scripts/integration-order.sh
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --tail=200
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

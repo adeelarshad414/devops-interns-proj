@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: daig-config
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "daig"
+  POSTGRES_USER: "daig"
+  ORDERS_URL: "http://orders:3001"
+  KITCHEN_URL: "http://kitchen:3002"
+  DISPATCH_URL: "http://dispatch:3003"
+  REDIS_URL: "redis://redis:6379"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+  OTEL_SERVICE_NAMESPACE: "daig"
+  CHAOS_SLOW_DISPATCH: "false"
+  CHAOS_HOT_SURGE_LOOP: "false"
+  CHAOS_DROP_RATE: "0"

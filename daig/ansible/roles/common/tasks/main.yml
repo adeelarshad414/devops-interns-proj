@@ -1,0 +1,57 @@
+---
+# Every task here is idempotent. Run the playbook twice and this role reports
+# "ok" on the second run. That is not an accident, it is the entire discipline.
+
+- name: Ensure base packages are present
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+      - gnupg
+      - jq
+      - htop
+      - net-tools
+      - dnsutils      # Day 1 gave them dig and nslookup; keep them available
+      - iproute2      # ss
+      - tcpdump
+      - unzip
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure the service account exists
+  ansible.builtin.user:
+    name: "{{ daig_service_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+    state: present
+
+- name: Apply kernel tuning
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop: "{{ tuned_sysctl | dict2items }}"
+
+- name: Raise the open file limit for the service user
+  ansible.builtin.pam_limits:
+    domain: "{{ daig_service_user }}"
+    limit_type: "-"
+    limit_item: nofile
+    value: "65535"
+
+- name: Ensure chrony is installed and running
+  ansible.builtin.apt:
+    name: chrony
+    state: present
+
+- name: Ensure chrony is enabled
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
+  # Clock skew makes distributed traces nonsense and makes log correlation
+  # impossible. It is the least glamorous prerequisite for observability.

@@ -1,0 +1,19 @@
+---
+- name: Base configuration for every host
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Application tier
+  hosts: daig_app
+  become: true
+  roles:
+    - docker
+    - daig_app
+
+- name: Data tier
+  hosts: daig_data
+  become: true
+  roles:
+    - postgres

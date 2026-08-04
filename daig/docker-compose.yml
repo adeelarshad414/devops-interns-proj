@@ -1,0 +1,104 @@
+name: daig
+
+x-app-env: &app-env
+  NODE_ENV: ${NODE_ENV:-development}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DATABASE_URL: ${DATABASE_URL}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+  JWT_SECRET: ${JWT_SECRET}
+  ORDERS_URL: http://orders:3001
+  KITCHEN_URL: http://kitchen:3002
+  DISPATCH_URL: http://dispatch:3003
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+  OTEL_SERVICE_NAMESPACE: daig
+  CHAOS_SLOW_DISPATCH: ${CHAOS_SLOW_DISPATCH:-false}
+  CHAOS_HOT_SURGE_LOOP: ${CHAOS_HOT_SURGE_LOOP:-false}
+  CHAOS_DROP_RATE: ${CHAOS_DROP_RATE:-0}
+
+x-app-logging: &app-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ---------------- TIER 3: DATA ----------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-daig}
+      POSTGRES_USER: ${POSTGRES_USER:-daig}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-daig} -d ${POSTGRES_DB:-daig}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    logging: *app-logging
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redisdata:/data"]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *app-logging
+
+  # ---------------- TIER 2: APPLICATION ----------------
+  orders:
+    build:
+      context: .
+      dockerfile: services/orders/Dockerfile
+      target: runtime
+    environment: *app-env
+    ports: ["3001:3001"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_started }
+    restart: unless-stopped
+    logging: *app-logging
+
+  kitchen:
+    build:
+      context: .
+      dockerfile: services/kitchen/Dockerfile
+    environment: *app-env
+    ports: ["3002:3002"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *app-logging
+
+  dispatch:
+    build:
+      context: .
+      dockerfile: services/dispatch/Dockerfile
+    environment: *app-env
+    ports: ["3003:3003"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *app-logging
+
+  # ---------------- TIER 1: PRESENTATION ----------------
+  web:
+    build:
+      context: .
+      dockerfile: services/web/Dockerfile
+    ports: ["8080:8080"]
+    depends_on: [orders, kitchen, dispatch]
+    restart: unless-stopped
+    logging: *app-logging
+
+volumes:
+  pgdata:
+  redisdata:

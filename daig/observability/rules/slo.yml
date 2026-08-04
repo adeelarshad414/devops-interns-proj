@@ -1,0 +1,59 @@
+# SLO rules. These are the numbers the deck's error-budget slide talks about.
+#
+# Daig's availability SLO: 99.9% of order requests succeed over 30 days
+#   = 43 minutes of allowed failure per month.
+# Daig's latency SLO: 95% of order requests complete in under 1 second.
+
+groups:
+  - name: daig-slo-recording
+    interval: 30s
+    rules:
+      - record: daig:order_requests:rate5m
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[5m]))
+
+      - record: daig:order_errors:rate5m
+        expr: sum(rate(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[5m]))
+
+      - record: daig:order_availability:ratio5m
+        expr: 1 - (daig:order_errors:rate5m / clamp_min(daig:order_requests:rate5m, 0.001))
+
+      - record: daig:error_budget_consumed:ratio30d
+        expr: (sum(increase(daig_http_request_duration_seconds_count{service="orders",route="/api/orders",status=~"5.."}[30d])) / clamp_min(sum(increase(daig_http_request_duration_seconds_count{service="orders",route="/api/orders"}[30d])), 1)) / 0.001
+
+      - record: daig:order_latency:p95_5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(daig_http_request_duration_seconds_bucket{service="orders",route="/api/orders"}[5m])))
+
+  - name: daig-alerts
+    rules:
+      # Alert on symptoms the customer feels, never on causes.
+      - alert: DaigOrdersFailing
+        expr: daig:order_availability:ratio5m < 0.99
+        for: 3m
+        labels: { severity: critical, tier: application }
+        annotations:
+          summary: "Orders are failing ({{ $value | humanizePercentage }} success)"
+          description: "More than 1% of order requests are failing. Customers cannot order."
+          runbook: "docs/DAY4.md#orders-failing"
+
+      - alert: DaigOrdersSlow
+        expr: daig:order_latency:p95_5m > 1
+        for: 5m
+        labels: { severity: warning, tier: application }
+        annotations:
+          summary: "Order p95 latency is {{ $value }}s, SLO is 1s"
+          description: "Check the trace before you check the code. Dispatch is the usual culprit."
+
+      - alert: DaigErrorBudgetBurning
+        expr: daig:error_budget_consumed:ratio30d > 0.75
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "75% of the 30-day error budget is spent"
+          description: "Consider a change freeze. See the error budget policy."
+
+      - alert: DaigServiceDown
+        expr: up{job="daig-services"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.service }} is not being scraped"

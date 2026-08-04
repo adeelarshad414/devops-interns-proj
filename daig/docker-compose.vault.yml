@@ -1,0 +1,40 @@
+# OpenBao - the credential store.
+#
+#   make vault-up        start and initialise
+#   make vault-app       run Daig with credentials from OpenBao
+#
+# NOT dev mode. Dev mode keeps everything in memory, auto-unseals, and hands you
+# a root token on the command line - convenient, and it teaches the wrong thing.
+# This runs with file storage and a real unseal so interns see the actual
+# lifecycle: initialise, unseal, authenticate, read.
+#
+# OpenBao is the Linux Foundation fork of HashiCorp Vault. Same API, same CLI
+# verbs, Mozilla Public Licence rather than BUSL. Everything here works
+# unchanged against Vault.
+
+services:
+  openbao:
+    image: openbao/openbao:2.0.0
+    command: ["server", "-config=/openbao/config/config.hcl"]
+    cap_add: [IPC_LOCK]        # stops secrets being swapped to disk
+    environment:
+      BAO_ADDR: http://127.0.0.1:8200
+      BAO_API_ADDR: http://openbao:8200
+    volumes:
+      - ./vault/config:/openbao/config:ro
+      - baodata:/openbao/data
+      - baologs:/openbao/logs
+    ports: ["8200:8200"]
+    healthcheck:
+      # 501 = initialised but sealed, 503 = sealed. Both mean the process is up.
+      # Treating "sealed" as unhealthy would restart-loop a vault that is simply
+      # waiting to be unsealed, which is a genuinely confusing failure.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8200/v1/sys/health?sealedcode=200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+volumes:
+  baodata:
+  baologs:

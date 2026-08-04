@@ -1,0 +1,55 @@
+# SonarQube overlay - code quality gate.
+#   docker compose -f docker-compose.yml -f docker-compose.sonar.yml up -d
+#
+# First boot takes 2-4 minutes and needs ~2GB RAM free. On a laptop already
+# running the observability stack this is tight; run them separately unless the
+# machine has 16GB.
+#
+# Default login admin / admin, which SonarQube forces you to change on first
+# login. That forced change is itself worth pointing at on Day 4.
+
+services:
+  sonar-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: CHANGE_ME_DEV_ONLY
+      POSTGRES_DB: sonar
+    volumes:
+      - sonardb:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar"]
+      interval: 5s
+      retries: 12
+
+  sonarqube:
+    image: sonarqube:10.6-community
+    depends_on:
+      sonar-db: { condition: service_healthy }
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: CHANGE_ME_DEV_ONLY
+      # Elasticsearch inside SonarQube refuses to start with a low mmap limit.
+      # If it dies on boot, this is why:
+      #   sudo sysctl -w vm.max_map_count=524288
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonardata:/opt/sonarqube/data
+      - sonarextensions:/opt/sonarqube/extensions
+      - sonarlogs:/opt/sonarqube/logs
+    ports: ["9000:9000"]
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/api/system/status | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+
+volumes:
+  sonardb:
+  sonardata:
+  sonarextensions:
+  sonarlogs:

@@ -1,0 +1,26 @@
+# Normalise line endings. Without this, a Windows clone rewrites every shell
+# script with CRLF and every one of them fails with a confusing "not found"
+# error that names the interpreter. It costs one file to prevent.
+* text=auto eol=lf
+
+*.sh      text eol=lf
+Makefile  text eol=lf
+*.js      text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.tf      text eol=lf
+*.hcl     text eol=lf
+*.rego    text eol=lf
+*.sql     text eol=lf
+*.md      text eol=lf
+
+*.png binary
+*.jpg binary
+*.gz  binary
+*.zip binary
+
+# Keep generated and vendored files out of diffs and language statistics.
+*.lock            linguist-generated=true
+package-lock.json linguist-generated=true
+docs/**           linguist-documentation=true

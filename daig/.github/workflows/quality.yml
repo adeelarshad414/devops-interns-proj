@@ -1,0 +1,81 @@
+name: Code quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  coverage:
+    name: Tests with coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [orders, kitchen, dispatch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - working-directory: services/${{ matrix.service }}
+        run: npm install --no-audit --no-fund
+
+      - name: Run tests with coverage
+        working-directory: services/${{ matrix.service }}
+        run: |
+          if [ -d test ]; then
+            node --experimental-test-coverage \
+                 --test-reporter=lcov --test-reporter-destination=lcov.info \
+                 --test test/ || true
+          else
+            echo "no tests for ${{ matrix.service }} yet" > lcov.info
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/lcov.info
+          if-no-files-found: ignore
+
+  sonarqube:
+    name: SonarQube quality gate
+    runs-on: ubuntu-latest
+    needs: coverage
+    # Forks cannot read secrets, so the scan would fail for reasons unrelated
+    # to code quality. Skip rather than fail confusingly.
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Sonar needs history for new-code detection
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: coverage-raw
+
+      - name: Merge coverage reports
+        run: |
+          mkdir -p coverage
+          find coverage-raw -name 'lcov.info' -exec cat {} + > coverage/lcov.info || true
+          wc -l coverage/lcov.info
+
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      # Blocks the merge when the gate fails. Without this step the scan is
+      # decoration - it reports and nothing happens.
+      - name: Enforce the quality gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

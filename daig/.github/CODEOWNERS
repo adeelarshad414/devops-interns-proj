@@ -1,0 +1,17 @@
+# Every pull request needs a review from an owner of the touched paths.
+# Replace the handles before you push - these are placeholders.
+
+*                       @adeelarshad414
+
+# Security-relevant paths need a security review specifically. Splitting
+# ownership by path is how you make review expertise-shaped rather than
+# rota-shaped.
+/security/              @adeelarshad414
+/vault/                 @adeelarshad414
+/.github/workflows/     @adeelarshad414
+/infra/                 @adeelarshad414
+
+# The teaching material has a different reviewer concern: is it correct, and
+# is it teachable? Those are not the same question as "does it work".
+/docs/                  @adeelarshad414
+/chaos/                 @adeelarshad414

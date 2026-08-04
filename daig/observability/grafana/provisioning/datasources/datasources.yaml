@@ -1,0 +1,58 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prom
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 15s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      # This is what turns a log line into a clickable trace.
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id":"(\w+)"'
+          url: '${__value.raw}'
+          datasourceUid: tempo
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -2m
+        spanEndTimeShift: 2m
+        filterByTraceID: true
+        tags: [{ key: 'service.name', value: 'service' }]
+      tracesToMetrics:
+        datasourceUid: prom
+        queries:
+          - name: 'Request rate'
+            query: 'sum(rate(daig_http_request_duration_seconds_count{$$__tags}[5m]))'
+      tracesToProfiles:
+        datasourceUid: pyroscope
+        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
+      serviceMap:
+        datasourceUid: prom
+      nodeGraph:
+        enabled: true
+
+  - name: Pyroscope
+    type: grafana-pyroscope-datasource
+    uid: pyroscope
+    access: proxy
+    url: http://pyroscope:4040

@@ -1,0 +1,71 @@
+# OpenTelemetry Collector. The seam between your code and your vendors.
+#
+# The reason this file matters: every service speaks OTLP and nothing else.
+# Swapping Tempo for Datadog, or Prometheus for Mimir, is a change HERE and
+# nowhere in the application. That is the whole argument for OTel.
+
+receivers:
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+
+processors:
+  # Batching is not optional at any real volume.
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+  # Protects the collector from OOM under the iftar spike.
+  memory_limiter:
+    check_interval: 2s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: local
+        action: upsert
+
+  # Turns spans into RED metrics so latency dashboards need no extra code.
+  # This is how you get p95 per service for free.
+connectors:
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s, 10s]
+    dimensions:
+      - name: http.route
+      - name: http.method
+      - name: http.status_code
+    metrics_flush_interval: 15s
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls: { insecure: true }
+
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion: { enabled: true }
+
+  debug:
+    verbosity: basic
+
+service:
+  telemetry:
+    logs: { level: info }
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/tempo, spanmetrics]
+    metrics:
+      receivers: [otlp, spanmetrics]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]

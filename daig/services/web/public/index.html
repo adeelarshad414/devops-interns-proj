@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daig</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header>
+  <h1>Daig</h1>
+  <p class="sub">Three tiers, one trace, several deliberate mistakes.</p>
+</header>
+
+<main>
+  <section id="status-panel">
+    <h2>Tier health</h2>
+    <div id="tiers" class="grid"></div>
+  </section>
+
+  <section>
+    <h2>Restaurants</h2>
+    <div id="restaurants" class="grid">Loading…</div>
+  </section>
+
+  <section>
+    <h2>Place an order</h2>
+    <p class="hint">Every order you place here crosses all three application
+      services. Open Grafana and find the trace.</p>
+    <div class="row">
+      <select id="restaurant"></select>
+      <select id="area">
+        <option>Gulberg</option><option>Saddar</option><option>Tariq Road</option>
+        <option>Burns Road</option><option>Do Darya</option><option>Lakshmi Chowk</option>
+      </select>
+      <button id="place">Place order</button>
+    </div>
+    <pre id="result" aria-live="polite"></pre>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+---
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: restart daig
+  ansible.builtin.systemd:
+    name: daig
+    state: restarted

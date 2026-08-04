@@ -1,0 +1,26 @@
+# Demo Day scenario 9. Blocks orders from reaching the data tier.
+#
+# The reason this one is the hardest: there is no error in any log that names
+# the cause. Readiness returns 503, the connection times out, and nothing
+# anywhere says "a NetworkPolicy did this". They have to reason about what
+# changed rather than read an answer off a screen.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-orders-egress
+  namespace: daig
+spec:
+  podSelector:
+    matchLabels:
+      app: orders
+  policyTypes: [Egress]
+  egress:
+    # DNS only. Everything else is dropped.
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53

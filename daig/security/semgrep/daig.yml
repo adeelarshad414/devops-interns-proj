@@ -1,0 +1,93 @@
+# Custom Semgrep rules for Daig.
+#
+# The registry rulesets (p/javascript, p/nodejs, p/owasp-top-ten) catch the
+# generic classes. These rules encode OUR conventions - the things a generic
+# ruleset cannot know about our codebase.
+#
+# Writing a rule for your own convention is the most useful Semgrep skill and
+# almost nobody teaches it. Have interns write rule 5 themselves.
+
+rules:
+  - id: daig-sql-string-concatenation
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      SQL built by string concatenation or template literal. Pass values as
+      parameters ($1, $2) instead. See CWE-89.
+    patterns:
+      - pattern-either:
+          - pattern: "$Q.query(`... ${$X} ...`, ...)"
+          - pattern: "$Q(..., `...${$X}...`)"
+          - pattern: |
+              $SQL = `...${$X}...`;
+              ...
+              $Q.query($SQL, ...)
+      - metavariable-regex:
+          metavariable: $SQL
+          regex: (?i).*(select|insert|update|delete).*
+
+  - id: daig-weak-hash
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      MD5 and SHA1 are not password hashes. Use argon2id, or bcrypt/scrypt with
+      a deliberate cost factor. See CWE-327.
+    pattern-either:
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash("sha1")
+
+  - id: daig-stack-trace-in-response
+    languages: [javascript]
+    severity: WARNING
+    message: >-
+      Stack trace returned to the caller. Log the detail, return an opaque
+      reference id. See CWE-209.
+    pattern-either:
+      - pattern: "$RES.json({..., stack: $E.stack, ...})"
+      - pattern: $RES.send($E.stack)
+
+  - id: daig-env-in-response
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      Environment variable in an HTTP response. This is how connection strings
+      and API keys leak.
+    pattern-either:
+      - pattern: "$RES.json({..., $K: process.env.$V, ...})"
+      - pattern: $RES.send(process.env.$V)
+
+  - id: daig-unvalidated-fetch
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      fetch() with a caller-controlled URL. SSRF - allowlist the host, require
+      https, and reject private and link-local address ranges. See CWE-918.
+    patterns:
+      - pattern: fetch($URL, ...)
+      - metavariable-pattern:
+          metavariable: $URL
+          patterns:
+            - pattern-either:
+                - pattern: $REQ.body.$F
+                - pattern: $REQ.query.$F
+                - pattern: $REQ.params.$F
+
+  # ------------------------------------------------------------------
+  # EXERCISE: write this one yourself.
+  #
+  # Our convention is that every database call goes through the timed q()
+  # helper in services/_shared/db.js, never pool.query() directly, so that
+  # every query appears in daig_db_query_duration_seconds.
+  #
+  # Write a rule that flags a direct pool.query() call outside _shared/db.js.
+  # Then run it and see whether the codebase actually obeys its own convention.
+  # (It does not, in one place. Find it.)
+  # ------------------------------------------------------------------
+  - id: daig-direct-pool-query
+    languages: [javascript]
+    severity: INFO
+    message: "TODO - intern exercise. See the comment above this rule."
+    pattern: pool.query(...)
+    paths:
+      exclude:
+        - services/_shared/db.js

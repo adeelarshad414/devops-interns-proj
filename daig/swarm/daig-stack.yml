@@ -1,0 +1,140 @@
+# Docker Swarm stack. Deploy with:
+#   docker swarm init
+#   docker stack deploy -c swarm/daig-stack.yml daig
+#   docker stack services daig
+#
+# WHY THIS EXISTS IN A COURSE THAT ALSO TEACHES KUBERNETES
+#
+# Swarm is the shortest possible path to the four orchestration ideas:
+# desired state, service discovery, rolling updates, and self-healing. It is
+# roughly forty lines of YAML you can read in one sitting, versus several
+# hundred for the equivalent Kubernetes manifests.
+#
+# Teach Swarm for ninety minutes, THEN Kubernetes, and Kubernetes stops looking
+# arbitrary - every concept has a Swarm equivalent they already understand.
+#
+# Then be honest: Swarm is in maintenance, the industry standardised on
+# Kubernetes, and nobody should start a new production platform on Swarm in
+# 2026. It is a teaching ladder, not a destination. Say that out loud.
+
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: daig
+      POSTGRES_USER: daig
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [data]
+    deploy:
+      replicas: 1
+      placement:
+        # Stateful service pinned to a manager so the volume follows it.
+        # In production this is a managed database and this problem disappears.
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  orders:
+    image: ghcr.io/adeelarshad414/daig/orders:latest
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      KITCHEN_URL: http://kitchen:3002
+      DATABASE_URL_FILE: /run/secrets/database_url
+    secrets: [database_url]
+    networks: [frontend, backend, data]
+    deploy:
+      replicas: 3
+      update_config:
+        # Rolling update, one at a time, automatic rollback on failure.
+        # This is the same idea as the Kubernetes rollout and the ECS circuit
+        # breaker - three platforms, one concept.
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+        monitor: 30s
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits: { cpus: "0.50", memory: 512M }
+        reservations: { cpus: "0.10", memory: 128M }
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3001/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  kitchen:
+    image: ghcr.io/adeelarshad414/daig/kitchen:latest
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      DISPATCH_URL: http://dispatch:3003
+      DATABASE_URL_FILE: /run/secrets/database_url
+    secrets: [database_url]
+    networks: [backend, data]
+    deploy:
+      replicas: 2
+      update_config: { parallelism: 1, delay: 10s, failure_action: rollback }
+      restart_policy: { condition: on-failure }
+
+  dispatch:
+    image: ghcr.io/adeelarshad414/daig/dispatch:latest
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL_FILE: /run/secrets/database_url
+    secrets: [database_url]
+    networks: [backend, data]
+    deploy:
+      replicas: 2
+      update_config: { parallelism: 1, delay: 10s, failure_action: rollback }
+      restart_policy: { condition: on-failure }
+
+  web:
+    image: ghcr.io/adeelarshad414/daig/web:latest
+    networks: [frontend]
+    ports:
+      # Swarm's routing mesh: hit this port on ANY node and it reaches a task,
+      # wherever that task happens to be running. Demonstrate by curling a
+      # node that is not running the container.
+      - target: 8080
+        published: 8080
+        mode: ingress
+    deploy:
+      replicas: 2
+      update_config: { parallelism: 1, delay: 5s }
+
+networks:
+  # Three overlay networks, one per tier boundary. web cannot reach data at
+  # all - the network topology enforces the three-tier model rather than
+  # relying on anyone remembering it.
+  frontend:
+    driver: overlay
+  backend:
+    driver: overlay
+  data:
+    driver: overlay
+    internal: true   # no external egress from the data network
+
+volumes:
+  pgdata:
+
+secrets:
+  db_password:
+    external: true
+  database_url:
+    external: true

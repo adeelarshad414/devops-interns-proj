@@ -1,0 +1,4 @@
+project_id  = "tkxel-daig-training"
+region      = "europe-west1"
+environment = "dev"
+db_tier     = "db-f1-micro"

@@ -1,0 +1,39 @@
+name: Teaching improvement
+description: An exercise does not land, or an explanation is unclear
+labels: [teaching]
+body:
+  - type: dropdown
+    id: day
+    attributes:
+      label: Which session
+      options:
+        - Kickoff (2h)
+        - Day 1 - Git, Linux, networking
+        - Day 2 - Cloud, Terraform
+        - Day 3 - Ansible, Docker
+        - Day 4 - CI/CD, observability
+        - Day 5 - DevSecOps
+        - Day 6 - Kubernetes, Demo Day
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened with the cohort
+      description: Where attention dropped, what questions recurred, what they still could not do
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested change
+    validations:
+      required: true
+
+  - type: input
+    id: cohort
+    attributes:
+      label: Cohort and size
+      placeholder: "2026 intake, 18 interns"

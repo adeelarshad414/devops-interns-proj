@@ -1,0 +1,93 @@
+name: Security
+
+# Shift-left, made concrete. Four different classes of problem, four scanners.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Dependencies rot while you sleep. Weekly re-scan of unchanged code.
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secrets:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks needs history to scan past commits
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependencies:
+    name: Dependency vulnerabilities
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [orders, kitchen, dispatch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - working-directory: services/${{ matrix.service }}
+        run: |
+          npm install --no-audit --no-fund
+          # Report everything, fail only on high and above. A pipeline that
+          # fails on every low finding is a pipeline people learn to ignore.
+          npm audit --audit-level=high
+
+  images:
+    name: Image and filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy - filesystem, IaC and config
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-fs.sarif
+          severity: HIGH,CRITICAL
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs.sarif
+
+  iac:
+    name: Terraform static analysis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cloud: [aws, gcp, azure]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: '1.9.5' }
+
+      - name: Format check
+        working-directory: infra/${{ matrix.cloud }}
+        run: terraform fmt -check -recursive
+
+      - name: Init and validate
+        working-directory: infra/${{ matrix.cloud }}
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infra/${{ matrix.cloud }}
