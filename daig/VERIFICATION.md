@@ -45,6 +45,8 @@ the wrong lesson.
 | `scripts/init-repo.sh` | **UNVERIFIED** | `bash -n` clean; never run against a real repo |
 | Markdown cross-links | **VERIFIED (real)** | every relative link in every `.md` resolved to an existing file — 0 broken |
 | Mermaid diagrams | **VERIFIED (static)** | fences balanced; never rendered by GitHub |
+| `scripts/cost-model.py` | **VERIFIED (real)** | executed; output inspected; exposed and fixed a real cost defect in `infra/gcp` |
+| Cost figures in `docs/COST.md` | **VERIFIED (computed)** | derived from the model, not typed. Rates marked `[E]` are unverified secondary sources; **never compared to an actual invoice** |
 
 ## What this means for you
 

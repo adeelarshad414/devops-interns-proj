@@ -13,17 +13,21 @@ break.
 
 ### Planning & design docs
 
-| # | File | What it is |
-|---|------|------------|
-| 0 | [`00-START-HERE.md`](00-START-HERE.md) | The entry point — index, run/push instructions, open decisions. |
-| 1 | [`01-AUDIT-devops-intern-deck-2025.md`](01-AUDIT-devops-intern-deck-2025.md) | Slide-by-slide audit of last year's 65-slide deck. |
-| 2 | [`02-DESIGN-devops-intern-kickoff-2026.md`](02-DESIGN-devops-intern-kickoff-2026.md) | Design for the kickoff and rotation, with a minute-by-minute run sheet. |
-| 3 | [`03-COVERAGE-skills-matrix.md`](03-COVERAGE-skills-matrix.md) | The scope decision — 20 skills, 6 days, an honest depth level for each. |
-| 4 | [`04-DEVSECOPS-guide.md`](04-DEVSECOPS-guide.md) | Seven gates, six vulnerabilities, supply chain, secrets. |
-| 5 | [`05-DAIG-README.md`](05-DAIG-README.md) | The demo platform's README, with architecture and flow diagrams. |
-| 6 | [`06-ARCHITECTURE.md`](06-ARCHITECTURE.md) | Eighteen design decisions and the alternatives rejected. |
-| 7 | [`07-REQUIREMENTS.md`](07-REQUIREMENTS.md) | 28 functional and 45 non-functional requirements, with traceability. |
-| 8 | [`08-DEPLOYMENT.md`](08-DEPLOYMENT.md) | Environment-by-environment procedures and rollback. |
+| # | File | Audience | What it is |
+|---|------|----------|------------|
+| 0 | [`00-START-HERE.md`](00-START-HERE.md) | you | The entry point — index, run/push instructions, open decisions. |
+| 1 | [`01-AUDIT-devops-intern-deck-2025.md`](01-AUDIT-devops-intern-deck-2025.md) | you | Slide-by-slide audit of last year's deck. |
+| 2 | [`02-DESIGN-devops-intern-kickoff-2026.md`](02-DESIGN-devops-intern-kickoff-2026.md) | you | Kickoff design, run sheet timed to the minute. |
+| 3 | [`03-CHARTER-objective-milestones-tasks.md`](03-CHARTER-objective-milestones-tasks.md) | **you first** | Objective, 24 checkpoint questions, 8 milestones, 16 targets, 57 tasks. |
+| 4 | [`04-COVERAGE-skills-matrix.md`](04-COVERAGE-skills-matrix.md) | you | The scope decision — 20 skills, 6 days, an honest depth level for each. |
+| 5 | [`05-CHEATSHEET-handout.md`](05-CHEATSHEET-handout.md) | **interns, Day 1** | Commands and the diagnostic ladder. No answers — safe to print. |
+| 6 | [`06-SOLUTIONS-instructor-only.md`](06-SOLUTIONS-instructor-only.md) | **you only** | Step-by-step for every task, chaos variant and checkpoint question. |
+| 7 | [`07-DEVSECOPS-guide.md`](07-DEVSECOPS-guide.md) | you | Seven gates, six vulnerabilities, supply chain, secrets. |
+| 8 | [`08-DAIG-README.md`](08-DAIG-README.md) | both | The platform README, with architecture and flow diagrams. |
+| 9 | [`09-ARCHITECTURE.md`](09-ARCHITECTURE.md) | you | Eighteen design decisions and the alternatives rejected. |
+| 10 | [`10-REQUIREMENTS.md`](10-REQUIREMENTS.md) | you | 28 functional and 45 non-functional requirements, with traceability. |
+| 11 | [`11-DEPLOYMENT.md`](11-DEPLOYMENT.md) | both | Per-environment procedures and rollback. |
+| 12 | [`12-COST-estimate.md`](12-COST-estimate.md) + [`12-cost-model.py`](12-cost-model.py) | you | What it costs on each cloud. Computed, not asserted. |
 
 ### The deck
 
@@ -32,12 +36,12 @@ break.
 
 ### The demo platform
 
-- [`daig/`](daig/) — the full demo repository (185 files): Docker Compose stack,
-  Ansible, Kubernetes manifests, observability, security scanning, chaos
-  experiments, and a Vault/OpenBao setup. See [`daig/README.md`](daig/README.md).
+- [`daig/`](daig/) — the full demo repository: Docker Compose stack, Ansible,
+  Kubernetes manifests, observability, security scanning, chaos experiments, and
+  a Vault/OpenBao setup. See [`daig/README.md`](daig/README.md).
 
-**Start with doc 3 if you're planning. Start with doc 5 (or `daig/README.md`) if
-you're running the code.**
+**Start with doc 3 (CHARTER) if you're planning. Start with doc 8 (or
+`daig/README.md`) if you're running the code.**
 
 ---
 
@@ -70,7 +74,7 @@ Day 1.
 
 Carried over from [`00-START-HERE.md`](00-START-HERE.md) — resolve these before the kickoff:
 
-1. **Six days or five** — `03-COVERAGE` lays out three options.
+1. **Six days or five** — `04-COVERAGE` lays out three options (Option A is six days).
 2. **Which cloud is hands-on** — one done properly beats three clicked through.
 3. **Cloud sandbox with a spend cap** — set the budget alert before the first
    `terraform apply`, not after.

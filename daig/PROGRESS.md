@@ -37,7 +37,10 @@ end. Do not delete rows.
 | `secrets.js` + service bootstrap/app split (6 files) | 7 | `node --check` clean | **no** |
 | Git hygiene: LICENSE, CONTRIBUTING, SECURITY, CHANGELOG, CODEOWNERS, templates, dependabot, editorconfig, gitattributes, nvmrc, init-repo | 14 | YAML parses, `bash -n` clean | **no** |
 | README with 8 mermaid diagrams | 1 | fences balanced, 0 broken links | — |
-| Docs: ARCHITECTURE, REQUIREMENTS, DEPLOYMENT | 3 | link check clean | — |
+| Docs: ARCHITECTURE, REQUIREMENTS, DEPLOYMENT, COST | 4 | link check clean | — |
+| Docs: CHARTER (objective, 24 checkpoint Qs, 8 milestones, 16 targets, 57 tasks) | 1 | link check clean | — |
+| Docs: CHEATSHEET (hand out Day 1) + SOLUTIONS (instructor-held) | 2 | link check clean | — |
+| `scripts/cost-model.py` deterministic cost model | 1 | **executed — output inspected** | **yes** |
 | Docs: 5 days + instructor + git + networks/volumes + swarm + sonar + coverage + devsecops | 12 | n/a | — |
 
 ## Blocking before Monday
@@ -59,6 +62,10 @@ end. Do not delete rows.
 | 13 | Run `make vault-app` and confirm logs say `credential_source":"openbao"` | | **open** |
 | 14 | `./scripts/init-repo.sh <remote>` then push; set branch protection + secret scanning | | **open** |
 | 15 | Replace placeholder handles in `.github/CODEOWNERS` | | **open** |
+| 16 | Verify the `[E]` rates in `scripts/cost-model.py` against the official calculators | | **open** |
+| 17 | Set budget alerts before the first `terraform apply` — see `docs/COST.md` | | **open** |
+| 18 | Decide the 7 open questions in `docs/CHARTER.md` §2.3 | | **open** |
+| 19 | Print `docs/CHEATSHEET.md` for every intern. Do NOT hand out SOLUTIONS.md. | | **open** |
 
 ## Open design questions
 

@@ -47,6 +47,14 @@ resource "google_cloud_run_v2_service" "service" {
           cpu    = each.value.cpu
           memory = each.value.memory
         }
+        # cpu_idle = false means CPU stays allocated between requests.
+        #
+        # true  -> CPU throttled when idle, much cheaper, cold-start latency
+        # false -> CPU always allocated, predictable latency, always billed
+        #
+        # false is right for a service holding database connections and doing
+        # background work. It is also the reason min_instances matters so much
+        # on the bill - see the COST NOTE in variables.tf.
         cpu_idle = false
       }
 

@@ -413,12 +413,15 @@ Fifteen markdown files, each with one job. **Read them in this order.**
 | **README.md** | You are here. Architecture, flows, structure. |
 | [`VERIFICATION.md`](VERIFICATION.md) | **Before trusting anything.** What has run vs what has only been written. |
 | [`PROGRESS.md`](PROGRESS.md) | Start of every work session. Living source of truth. |
+| [`docs/CHARTER.md`](docs/CHARTER.md) | **Objective, questions, milestones, targets, tasks.** The one page to point at. |
 | [`docs/COVERAGE.md`](docs/COVERAGE.md) | Planning the rotation. Twenty skills, six days, honest depth per skill. |
 
 ### Running the rotation
 
 | File | For |
 |---|---|
+| [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md) | **Hand out on Day 1.** Commands and the diagnostic ladder, no answers. |
+| [`docs/SOLUTIONS.md`](docs/SOLUTIONS.md) | **Instructor-held.** Step-by-step for every task, chaos variant and checkpoint question. |
 | [`docs/INSTRUCTOR.md`](docs/INSTRUCTOR.md) | **Answers, pacing, cost control. Not for interns.** |
 | [`docs/DAY1.md`](docs/DAY1.md) → [`DAY5.md`](docs/DAY5.md) | Per-day run sheets: build, chaos hour, deliverable |
 
@@ -440,6 +443,7 @@ Fifteen markdown files, each with one job. **Read them in this order.**
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Design decisions and the tradeoffs behind them |
 | [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Functional and non-functional requirements, with IDs |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Environment-by-environment procedures and rollback |
+| [`docs/COST.md`](docs/COST.md) | What the rotation costs on each cloud, computed not asserted |
 | [`DUMMY-VALUES.md`](DUMMY-VALUES.md) | Every registered placeholder credential |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Conventions, including the rules specific to a teaching repo |
 | [`SECURITY.md`](SECURITY.md) | **The deliberate vulnerabilities. Do not report them.** |
@@ -547,6 +551,7 @@ daig/
 │
 ├── load/iftar-spike.js           zero-dependency load generator
 ├── scripts/                      smoke · seed · integration · init-repo
+│   └── cost-model.py             deterministic cost model, all three clouds
 ├── .githooks/pre-commit          CI checks, locally, in two seconds
 │
 ├── .github/
@@ -556,7 +561,11 @@ daig/
 │
 └── docs/                         ── DOCUMENTATION ────────────────────
     ├── ARCHITECTURE.md · REQUIREMENTS.md · DEPLOYMENT.md
+    ├── CHARTER.md                objective, questions, milestones, targets, tasks
     ├── COVERAGE.md               the scope decision
+    ├── COST.md                   what it costs on each cloud
+    ├── CHEATSHEET.md             hand out Day 1. commands only.
+    ├── SOLUTIONS.md              instructor-held. worked answers.
     ├── INSTRUCTOR.md             answers. not for interns.
     ├── DAY1–DAY5.md
     └── GIT.md · DOCKER-NETWORKS-VOLUMES.md · SWARM.md

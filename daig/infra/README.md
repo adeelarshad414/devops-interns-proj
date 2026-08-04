@@ -29,6 +29,18 @@ Before Tuesday, someone must run at least the AWS stack end to end. Expect to
 fix provider version constraints and at least one argument name - the providers
 move faster than any written material.
 
+## Cost
+
+Full model, computed rather than asserted: [`../docs/COST.md`](../docs/COST.md)
+
+```bash
+python3 ../scripts/cost-model.py
+```
+
+Short version: **about $5 per cloud for the whole rotation** if you only bring
+infrastructure up on Day 2 and Day 6, and destroy it each evening. About $1,900
+if twenty interns each apply a stack and nobody destroys anything for a month.
+
 ## Cost, before anyone runs anything
 
 Every stack defaults to the smallest instance sizes that work. Even so:
