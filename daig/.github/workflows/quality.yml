@@ -18,8 +18,8 @@ jobs:
       matrix:
         service: [orders, kitchen, dispatch]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: '22' }
 
       - working-directory: services/${{ matrix.service }}
@@ -36,7 +36,7 @@ jobs:
             echo "no tests for ${{ matrix.service }} yet" > lcov.info
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-${{ matrix.service }}
           path: services/${{ matrix.service }}/lcov.info
@@ -50,11 +50,11 @@ jobs:
     # to code quality. Skip rather than fail confusingly.
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0   # Sonar needs history for new-code detection
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: coverage-*
           path: coverage-raw
@@ -66,7 +66,7 @@ jobs:
           wc -l coverage/lcov.info
 
       - name: SonarQube scan
-        uses: SonarSource/sonarqube-scan-action@v3
+        uses: SonarSource/sonarqube-scan-action@13990a695682794b53148ff9f6a8b6e22e43955e # v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -74,7 +74,7 @@ jobs:
       # Blocks the merge when the gate fails. Without this step the scan is
       # decoration - it reports and nothing happens.
       - name: Enforce the quality gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
+        uses: SonarSource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # v1
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

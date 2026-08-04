@@ -35,3 +35,15 @@ That question is the bridge to Wednesday afternoon. Configuration management
 converges a mutable box; containers make the box immutable so there is nothing
 to converge. Teaching them in that order is why the second half of the day
 feels like a relief rather than another tool.
+
+## What the `daig_app` role deploys
+
+The systemd unit runs `docker compose up` in `{{ daig_app_dir }}`, so the role
+templates a `docker-compose.yml` there (previously missing — the unit would have
+failed with "no configuration file"). Unlike the repo's root compose, the host
+version **pulls** immutably-tagged images from the registry (`daig_registry` /
+`daig_image_tag`) rather than building — there is no build context on a real
+host. Postgres is external (the `postgres` role / `DATABASE_URL`); redis is
+co-located as a cache. The `docker` role also creates `/etc/apt/keyrings` before
+writing the Docker key and derives the apt `arch` from the host, so it works on
+arm64 as well as amd64.

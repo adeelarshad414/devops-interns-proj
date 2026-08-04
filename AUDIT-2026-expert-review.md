@@ -10,6 +10,16 @@ and CI/CD. **Method:** six domain passes reading the actual files.
 > are called out separately so nobody "fixes" the curriculum. What follows are
 > **genuine, unintended gaps** plus **enhancements**, ranked by real-world impact.
 
+> **✅ RESOLUTION (2026-08-05).** The P0/P1/P2 genuine gaps below have been fixed
+> and pushed — see the CHANGELOG `[Unreleased]` section for the itemised list and
+> the component READMEs (`k8s/`, `observability/`, `infra/`, `ansible/`) for the
+> documented posture. Validated with `kubectl kustomize` (28 objects),
+> `docker compose config` (base + obs) and full workflow-YAML parsing. Two
+> pre-existing bugs surfaced during the fix and were also corrected: an invalid
+> plain scalar in `cd.yml`, and a dummy-value CI gate whose narrow allowlist
+> would have failed the build. GitHub Actions are now SHA-pinned. Deliberate
+> teaching defects were left untouched.
+
 ---
 
 ## Verdict

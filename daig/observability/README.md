@@ -40,6 +40,33 @@ same dashboards, horizontally scalable, multi-tenant, long retention. Nothing
 in this repo changes except the remote-write target - which is the point of
 keeping the Collector in the middle.
 
+## Alerting has a delivery path now
+
+`prometheus.yml` has an `alerting:` block and the obs overlay ships an
+**Alertmanager** (`alertmanager.yml`). Without it, rules evaluate and go FIRING
+in the Prometheus UI but reach nobody — a common and dangerous half-measure.
+Routing is by **severity**: `critical` → a pager receiver, `warning` → a
+ticket/Slack receiver. The receivers are intentionally empty so the container
+starts without secrets; fill in the PagerDuty routing key / Slack webhook where
+the placeholders are.
+
+## Error budgets: burn rate, not a single threshold
+
+`rules/slo.yml` now carries **multi-window, multi-burn-rate** alerts (the Google
+SRE workbook pattern). Each pairs a long window ("this is real") with a short
+one ("it's still happening"): fast burn (14.4× over 1h & 5m) pages; slow burn
+(6× over 6h & 30m) pages; a 3× over 24h & 2h burn opens a ticket. The old single
+"75% of budget consumed" rule is kept only as a change-freeze signal — it is a
+lagging total, not a pager.
+
+Two supporting config points make the budget math honest:
+
+- Prometheus retention is **31d** (was 24h) so a 30-day budget window actually
+  has 30 days of data.
+- `--web.enable-remote-write-receiver` accepts Tempo's generated service-graph/
+  span metrics, and `--enable-feature=exemplar-storage` keeps exemplars so the
+  metrics → trace pivot below actually works.
+
 ## Cardinality, said once so it lands
 
 `daig_http_request_duration_seconds` is labelled by service, method, route and

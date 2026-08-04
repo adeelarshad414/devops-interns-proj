@@ -31,19 +31,23 @@ jobs:
     name: 1 · Secret scanning
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0   # a secret deleted in the latest commit is still in history
 
       - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Registered dummy values must not escape their allowed files
         run: |
           set -euo pipefail
-          ALLOWED='(.env.example|DUMMY-VALUES.md|docker-compose.(obs|sonar|security).yml|docs/|k8s/base/secret.yaml|swarm/|ansible/group_vars/|security/)'
+          # Kept identical to ci.yml. The registered placeholder legitimately
+          # lives in docs, the scanners that detect it (services/_shared/*), the
+          # dev-default Dockerfile, chaos dev scripts and dev-only compose —
+          # see DUMMY-VALUES.md. The gate fires when it appears anywhere else.
+          ALLOWED='(\.env\.example|DUMMY-VALUES\.md|README\.md|CONTRIBUTING\.md|SECURITY\.md|Makefile|docker-compose\.(obs|sonar|security)\.yml|docs/|\.github/|\.githooks/|k8s/base/secret\.yaml|swarm/|ansible/group_vars/|security/|vault/|chaos/|services/_shared/|services/orders/Dockerfile)'
           if grep -rn --exclude-dir=.git 'CHANGE_ME_DEV_ONLY' . \
                | grep -vE "$ALLOWED"; then
             echo "::error::Registered dummy value outside its allowed files. See DUMMY-VALUES.md."
@@ -56,10 +60,10 @@ jobs:
     name: 2 · SAST
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Semgrep
-        uses: semgrep/semgrep-action@v1
+        uses: semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
         with:
           config: >-
             p/javascript
@@ -69,7 +73,7 @@ jobs:
             security/semgrep/daig.yml
           generateSarif: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
         if: always()
         with:
           sarif_file: semgrep.sarif
@@ -79,12 +83,12 @@ jobs:
     name: 2b · CodeQL
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: github/codeql-action/init@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
         with:
           languages: javascript-typescript
           queries: security-extended
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
         with:
           category: codeql
 
@@ -97,8 +101,8 @@ jobs:
       matrix:
         service: [orders, kitchen, dispatch]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: '22' }
 
       - name: npm audit
@@ -110,7 +114,7 @@ jobs:
           npm audit --audit-level=high
 
       - name: OSV Scanner
-        uses: google/osv-scanner-action@v1
+        uses: google/osv-scanner-action@764c91816374ff2d8fc2095dab36eecd42d61638 # v1.9.2
         continue-on-error: true
         with:
           scan-args: |-
@@ -121,10 +125,10 @@ jobs:
     name: 4 · IaC and policy as code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Trivy - IaC misconfiguration
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
         with:
           scan-type: config
           scan-ref: .
@@ -132,7 +136,7 @@ jobs:
           format: sarif
           output: trivy-config.sarif
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
         if: always()
         with:
           sarif_file: trivy-config.sarif
@@ -142,7 +146,7 @@ jobs:
         # Never pin a CI action to a moving branch. Dependabot (github-actions
         # ecosystem) bumps this; for stricter supply-chain posture pin to the
         # release commit SHA instead of the tag.
-        uses: bridgecrewio/checkov-action@v12.1347.0
+        uses: bridgecrewio/checkov-action@99bb2caf247dfd9f03cf984373bc6043d4e32ebf # v12.1347.0
         continue-on-error: true
         with:
           directory: infra/
@@ -174,10 +178,10 @@ jobs:
       matrix:
         service: [orders, kitchen, dispatch, web]
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         if: github.event_name == 'push'
         with:
           registry: ghcr.io
@@ -186,7 +190,7 @@ jobs:
 
       - name: Build
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: services/${{ matrix.service }}/Dockerfile
@@ -196,7 +200,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy - image vulnerabilities
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
         with:
           image-ref: local/${{ matrix.service }}:${{ github.sha }}
           severity: HIGH,CRITICAL
@@ -204,20 +208,20 @@ jobs:
           ignore-unfixed: true    # do not block on something with no available fix
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           image: local/${{ matrix.service }}:${{ github.sha }}
           format: cyclonedx-json
           output-file: sbom-${{ matrix.service }}.cdx.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sbom-${{ matrix.service }}
           path: sbom-${{ matrix.service }}.cdx.json
 
       - name: Push with provenance and SBOM attestation
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: services/${{ matrix.service }}/Dockerfile
@@ -230,7 +234,7 @@ jobs:
 
       - name: Install cosign
         if: github.event_name == 'push'
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
 
       - name: Sign keyless
         if: github.event_name == 'push'
@@ -255,7 +259,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Start the stack
         run: |
@@ -264,7 +268,7 @@ jobs:
           ./scripts/seed.sh || true
 
       - name: OWASP ZAP baseline
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@66042c8e7e24680119199a017e5b0e8603bf4dae # v0.12.0
         with:
           target: http://localhost:8080
           rules_file_name: security/zap/rules.tsv

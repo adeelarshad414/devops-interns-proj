@@ -29,6 +29,23 @@ Before Tuesday, someone must run at least the AWS stack end to end. Expect to
 fix provider version constraints and at least one argument name - the providers
 move faster than any written material.
 
+## Security posture (audit fixes)
+
+Baseline items a real stack expects, added across all three clouds:
+
+- **DB TLS enforced**, not just requested — AWS via `sslmode=require` + an
+  `rds.force_ssl=1` parameter group; GCP via `ssl_mode = "ENCRYPTED_ONLY"`; Azure
+  already required it. The server rejects cleartext, rather than trusting the
+  client to opt in.
+- **AWS VPC flow logs** to CloudWatch — "what talked to what, and when" is
+  unanswerable after an incident without them.
+- **ECS autoscaling doesn't fight Terraform** — `aws_ecs_service` uses
+  `lifecycle { ignore_changes = [desired_count] }`, so a `terraform apply` during
+  the iftar spike won't reset live capacity to the static count.
+
+Still deliberately left for the class (see `PROGRESS.md`): remote state backends
+(commented), ALB TLS, single NAT — all annotated tradeoffs.
+
 ## Cost
 
 Full model, computed rather than asserted: [`../docs/COST.md`](../docs/COST.md)
