@@ -67,7 +67,7 @@ jobs:
           # that detect it (services/_shared/*), the dev-default Dockerfile, the
           # chaos dev scripts, and the dev-only compose/Makefile — see
           # DUMMY-VALUES.md. The gate fires when it appears ANYWHERE ELSE.
-          ALLOWED='(\.env\.example|DUMMY-VALUES\.md|README\.md|CONTRIBUTING\.md|SECURITY\.md|Makefile|docker-compose\.(obs|sonar|security)\.yml|docs/|\.github/|\.githooks/|k8s/base/secret\.yaml|swarm/|ansible/group_vars/|security/|vault/|chaos/|services/_shared/|services/orders/Dockerfile)'
+          ALLOWED='(\.env\.example|DUMMY-VALUES\.md|README\.md|CONTRIBUTING\.md|SECURITY\.md|TRAINING\.md|ASSIGNMENT\.md|SOLUTION\.md|Makefile|docker-compose\.(obs|sonar|security)\.yml|docs/|\.github/|\.githooks/|k8s/base/secret\.yaml|swarm/|ansible/group_vars/|security/|vault/|chaos/|services/_shared/|services/orders/Dockerfile)'
           if grep -rn --exclude-dir=.git 'CHANGE_ME_DEV_ONLY' . | grep -vE "$ALLOWED"; then
             echo "::error::Registered dummy value outside its allowed files. See DUMMY-VALUES.md."
             exit 1

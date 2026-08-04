@@ -21,6 +21,18 @@ Built as the training substrate for the tkxel DevOps intern rotation.
 
 ---
 
+## 📚 Start here — the learning path
+
+1. **[`TRAINING.md`](TRAINING.md)** — one-stop handbook: every area's concepts,
+   cheatsheets and guidelines (Linux → Docker → k8s → IaC → CI/CD → DevSecOps →
+   Vault → SRE → chaos), each grounded in a real file here.
+2. **[`ASSIGNMENT.md`](ASSIGNMENT.md)** — the capstone project: goal, seven
+   phased tasks in sequence, required evidence, and an acceptance checklist.
+3. **[`SOLUTION.md`](SOLUTION.md)** — step-by-step worked answers and checkpoint
+   solutions. **Instructor-held — don't hand it to interns.**
+
+---
+
 ## Contents
 
 1. [What this is](#what-this-is)
