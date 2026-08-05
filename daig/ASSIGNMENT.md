@@ -21,10 +21,32 @@ whole country orders dinner at once. By the end you will have exercised every
 layer of a modern delivery stack and, for each, **left a gate behind so the
 failure can't silently return.**
 
-The thread through all seven phases is the learning loop:
+The thread through all seven phases is the learning loop — you repeat it at a
+different layer each phase:
 
+```mermaid
+flowchart LR
+    A["👀 Watch it work"] --> B["💥 Break it"]
+    B --> C["🔎 Diagnose"]
+    C --> D["🔧 Fix at the right layer"]
+    D --> E["🛡️ Gate it"]
+    E -. "next phase, next layer" .-> A
 ```
-watch it work → break it → diagnose → fix at the right layer → gate it
+
+### The road map — seven phases, in order
+
+Each phase builds on the last; the box under each says what you'll be able to
+prove when it's done.
+
+```mermaid
+flowchart LR
+    P0["P0 · Baseline<br/>tooling green"] --> P1["P1 · Run<br/>exit-78 read"]
+    P1 --> P2["P2 · Observe<br/>trace · SLO · diagnose"]
+    P2 --> P3["P3 · Kubernetes<br/>scale · heal · roll back"]
+    P3 --> P4["P4 · IaC<br/>validate · idempotency"]
+    P4 --> P5["P5 · CI/CD<br/>make it refuse you"]
+    P5 --> P6["P6 · DevSecOps<br/>triage · fix · secrets"]
+    P6 --> P7["P7 · Harden<br/>prove a control"]
 ```
 
 ---

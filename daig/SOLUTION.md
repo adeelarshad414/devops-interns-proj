@@ -76,7 +76,18 @@ ms healthy.
 $ ./chaos/day4-latency.sh break
 $ PROFILE=spike node load/iftar-spike.js     # or: make load-spike
 ```
-Pivot chain:
+Pivot chain (note the two independent defects — no single pillar sees both):
+
+```mermaid
+flowchart TB
+    M["📈 Metric: p95 > 1s<br/>'orders is slow' — but which service?"] --> T
+    M --> P
+    T["🧵 Trace → dispatch owns the time<br/>~8 sequential count_rider_load spans = N+1"] --> F1["🔧 Fix: index + one grouped query"]
+    P["🔥 Profile → kitchen computeSurgeScore<br/>O(n²) hot loop dominates CPU"] --> F2["🔧 Fix: fast path"]
+    F1 --> R["revert · re-run load · compare p95"]
+    F2 --> R
+```
+
 1. **Metric** — `daig:order_latency:p95_5m` crosses the 1s line; `DaigOrdersSlow`
    goes pending/firing. Metrics only say "orders is slow".
 2. **Trace** — a slow trace shows **`dispatch`** owning most of the time, with ~8
@@ -136,6 +147,21 @@ unavailable new pod is never allowed to replace a healthy old one — so the old
 ReplicaSet keeps serving 100% of traffic. **The platform refused to complete a bad
 deploy.** No outage.
 
+```mermaid
+sequenceDiagram
+    participant Op as Operator
+    participant K as Kubernetes
+    participant Old as Old ReplicaSet (Ready)
+    participant New as New ReplicaSet (bad image)
+    Op->>K: set image = doesnotexist
+    K->>New: create pod
+    New-->>K: ImagePullBackOff — never Ready
+    Note over K,Old: maxUnavailable:0 → old pod is NOT removed
+    Old-->>Op: still serving 100% of traffic
+    Op->>K: rollout undo
+    K-->>Op: back to the last-good ReplicaSet
+```
+
 **Crashloop.**
 ```bash
 $ ./chaos/day3-crashloop.sh break
@@ -191,11 +217,13 @@ scaled up for.
 ## Phase 5 — CI/CD
 
 **Job graph (`.github/workflows/ci.yml`).**
-```
-static ─┐
-        ├─► build       (needs [static, test])  → GHCR on push
-test  ──┤
-        └─► integration (needs [static, test])  → compose up → smoke → order → down
+
+```mermaid
+flowchart LR
+    ST["static<br/>syntax · yaml · dummy-scan"] --> BLD["build image<br/>→ GHCR on push"]
+    TS["test<br/>unit matrix"] --> BLD
+    ST --> IN["integration<br/>compose up · smoke · order · down"]
+    TS --> IN
 ```
 Images are **built** in `build` for every matrix service and **pushed** only when
 `github.event_name == 'push'`; `:latest` only on the default branch.
@@ -265,6 +293,14 @@ authenticated via AppRole and read KV, not the environment. `vault/policies/orde
 grants `read` on `daig/data/database` and `daig/data/app` only and **explicitly
 `deny`s `daig/data/payment`** — so a compromised `orders` cannot read the payment
 provider key (deny always wins in OpenBao).
+
+```mermaid
+flowchart LR
+    O["orders (AppRole token)"] -->|read ✅| DB["daig/data/database"]
+    O -->|read ✅| APP["daig/data/app"]
+    O -->|"deny ⛔ (explicit)"| PAY["daig/data/payment"]
+    O -->|"deny ⛔"| SYS["sys/*"]
+```
 
 **Checkpoint.** Gates run secrets → SAST → SCA → IaC → image → DAST because they're
 ordered by **cost of feedback**: a leaked key (20s to detect) must never merge and

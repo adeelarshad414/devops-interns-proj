@@ -17,8 +17,38 @@ actually type) → **Guidelines** (the rules that keep you out of trouble).
 
 The golden thread across every area is the **learning loop**:
 
+```mermaid
+flowchart LR
+    A["👀 Watch it work"] --> B["💥 Break it"]
+    B --> C["🔎 Diagnose<br/>logs · metrics · traces · profiles"]
+    C --> D["🔧 Fix at the right layer"]
+    D --> E["🛡️ Gate it<br/>test · rule · policy · alert"]
+    E -. "next day, next layer" .-> A
 ```
-watch it work → break it → diagnose → fix at the right layer → gate it so it can't regress
+
+### The system you're operating
+
+Everything in this handbook is grounded in **daig**, a three-tier food-delivery
+platform. Keep this picture in your head:
+
+```mermaid
+flowchart TB
+    U(["🧑 Customer"]) --> W["web — nginx<br/>Tier 1 · presentation"]
+    W --> O
+    subgraph app ["Tier 2 · application (Node)"]
+        O["orders"] --> K["kitchen"] --> D["dispatch"]
+    end
+    subgraph data ["Tier 3 · data"]
+        PG[("Postgres")]
+        RD[("Redis")]
+    end
+    O --> PG
+    O --> RD
+    K --> PG
+    D --> PG
+    app -. "OTLP" .-> OT["OTel Collector"]
+    OT --> OBS["Prometheus · Loki · Tempo · Grafana"]
+    app -. "AppRole" .-> V[("OpenBao / Vault")]
 ```
 
 ---
@@ -200,6 +230,23 @@ Core objects & guardrails (all present in `k8s/base/`):
 | **securityContext / PSA** | Non-root, drop caps, seccomp; namespace-level Pod Security Admission |
 | `topologySpreadConstraints` | Spread replicas across nodes so a drain can't breach the PDB |
 
+How the objects relate — who owns what:
+
+```mermaid
+flowchart TB
+    HPA["HorizontalPodAutoscaler"] -->|owns replicas| DEP["Deployment"]
+    DEP --> RS["ReplicaSet"]
+    RS --> P1["Pod"]
+    RS --> P2["Pod"]
+    SVC["Service (ClusterIP)"] --> P1
+    SVC --> P2
+    PDB["PodDisruptionBudget"] -. "floors availability on drain" .-> DEP
+    NP["NetworkPolicy<br/>default-deny + tier allows"] -. guards .-> P1
+    NP -. guards .-> P2
+    PSA["Namespace PSA (baseline)"] -. "admits / rejects" .-> P1
+    PSA -. "admits / rejects" .-> P2
+```
+
 **Cheatsheet.**
 
 | Task | Command |
@@ -282,6 +329,26 @@ integration), `cd.yml` (iftar-window deploy guard, canary, rollout, rollback),
 `security.yml`, `devsecops.yml`, `quality.yml`. All actions **SHA-pinned**; OIDC
 (`id-token: write`) instead of long-lived cloud keys.
 
+CI proves the change; CD ships it so it can always be undone:
+
+```mermaid
+flowchart LR
+    subgraph CI ["CI (ci.yml)"]
+        ST["static"] --> BLD["build image"]
+        TS["test"] --> BLD
+        ST --> IN["integration<br/>up · smoke · order · down"]
+        TS --> IN
+    end
+    BLD -->|":sha always · :latest on main"| REG[("GHCR")]
+    REG --> CD
+    subgraph CD ["CD (cd.yml) — progressive delivery"]
+        GD["iftar-window guard"] --> CN["canary 10%<br/>watch SLO"]
+        CN --> RO["rollout 100%<br/>+ deploy marker"]
+        CN -->|"SLO breach"| RB["rollback<br/>one step, no rebuild"]
+        RO -->|"failure"| RB
+    end
+```
+
 **Cheatsheet — reading a workflow.**
 
 | Element | What to check |
@@ -321,6 +388,19 @@ a leaked key. Each gate catches a different class of problem.
 | 5 | Image | Trivy image | CVEs in image layers (**blocks**, `ignore-unfixed`) |
 | 5 | Supply chain | SBOM (Syft/CycloneDX) + cosign (keyless) | Provenance & tamper-evidence |
 | 6 | DAST | OWASP ZAP baseline | Runtime vulns against the live app |
+
+Ordered cheapest-and-fastest first, so feedback is quick and nobody waits 12
+minutes to learn about a typo:
+
+```mermaid
+flowchart LR
+    G1["1 · Secrets<br/>gitleaks<br/>~20s"] --> G2["2 · SAST<br/>Semgrep · CodeQL"]
+    G2 --> G3["3 · SCA<br/>npm audit · OSV"]
+    G3 --> G4["4 · IaC / policy<br/>Trivy · Checkov · OPA"]
+    G4 --> G5["5 · Image + SBOM + sign<br/>Trivy · Syft · cosign"]
+    G5 --> G6["6 · DAST<br/>ZAP · minutes"]
+    G6 --> OK{{"all gates pass → ship"}}
+```
 
 Plus **runtime**: Falco rules, Kyverno/OPA admission policies.
 
@@ -363,6 +443,19 @@ short-lived**. OpenBao (the Linux Foundation Vault fork — same API/CLI) gives:
 - **Least-privilege policies + `deny`** — a service reads only its own secrets;
   explicit `deny` wins, so it survives a future over-broad grant.
 
+How a service gets its secrets (and why it fails closed):
+
+```mermaid
+sequenceDiagram
+    participant S as Service (secrets.js)
+    participant V as OpenBao / Vault
+    S->>V: POST /auth/approle/login (role_id + secret_id)
+    V-->>S: short-lived client_token
+    S->>V: GET /v1/daig/data/database (X-Vault-Token)
+    V-->>S: DATABASE_URL (KV v2)
+    Note over S,V: In prod there is NO fallback to env.<br/>Auth or read fails → exit 78, loudly.
+```
+
 **In this repo.** `services/_shared/secrets.js` (AppRole → KV → **exit 78**, never
 a silent fallback to env in prod), `vault/policies/*.hcl` (per-service, explicit
 denies), `vault/config/config.hcl` (annotated dev-vs-prod), `vault/bootstrap.sh`.
@@ -404,6 +497,15 @@ decisions: **SLI/SLO/error budgets** and **symptom-based, burn-rate alerting**.
 - **Alert on symptoms the customer feels**, not on causes.
 - **Exemplars** link a metric bucket to the exact trace — the p95-spike → trace
   jump.
+
+The pivot chain — four pillars, one request, each answers a different question:
+
+```mermaid
+flowchart LR
+    M["📈 Metrics<br/>IS something wrong?<br/>p95 over SLO"] --> T["🧵 Traces<br/>WHERE is the time?<br/>which service/span"]
+    T --> L["📜 Logs<br/>WHAT happened?<br/>error for this trace_id"]
+    L --> P["🔥 Profiles<br/>WHICH line?<br/>hot function"]
+```
 
 **In this repo.** `observability/` — OTel Collector, Prometheus (31d retention,
 remote-write receiver, exemplar storage), Loki/Promtail, Tempo, Pyroscope,
