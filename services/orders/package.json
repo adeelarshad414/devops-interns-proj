@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test test/"
+    "test": "node --test"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
