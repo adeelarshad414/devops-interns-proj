@@ -8,6 +8,6 @@
     "test": "node --test"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^5.2.1"
   }
 }
