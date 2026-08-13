@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- deps ----------
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY services/orders/package.json services/orders/package-lock.json ./services/orders/
 COPY services/_shared/package.json services/_shared/package-lock.json ./services/_shared/
@@ -15,7 +15,7 @@ WORKDIR /app/services/_shared
 RUN npm ci --omit=dev --no-audit --no-fund
 
 # ---------- runtime base ----------
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -S daig && adduser -S daig -G daig
