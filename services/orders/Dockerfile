@@ -4,18 +4,21 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY services/orders/package.json services/orders/package-lock.json ./services/orders/
-COPY services/_shared/package.json ./services/_shared/
-WORKDIR /app/services/orders
-# npm ci installs from the committed lockfile: reproducible, and it fails loudly
-# if package.json and the lock have drifted. Never `npm install` in a build.
-RUN npm ci --omit=dev --no-audit --no-fund
+COPY services/_shared/package.json services/_shared/package-lock.json ./services/_shared/
+# Install BOTH the service's own deps (express, undici) AND the shared library's
+# deps (@opentelemetry/*, pg, prom-client, pino). _shared resolves its requires
+# from services/_shared/node_modules, so that tree must exist in the image.
+# npm ci installs from the committed lockfiles: reproducible, fails loudly on drift.
+RUN cd /app/services/orders  && npm ci --omit=dev --no-audit --no-fund \
+ && cd /app/services/_shared && npm ci --omit=dev --no-audit --no-fund
 
 # ---------- runtime base ----------
 FROM node:22-alpine AS base
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -S daig && adduser -S daig -G daig
-COPY --from=deps /app/services/orders/node_modules ./services/orders/node_modules
+COPY --from=deps /app/services/orders/node_modules  ./services/orders/node_modules
+COPY --from=deps /app/services/_shared/node_modules ./services/_shared/node_modules
 COPY services/_shared ./services/_shared
 COPY services/orders  ./services/orders
 USER daig

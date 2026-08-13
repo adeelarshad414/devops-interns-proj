@@ -1,0 +1,24 @@
+# Docker reads the .dockerignore at the BUILD CONTEXT root (the repo root),
+# not per-service ones. Without this, `node_modules`, git history and the deck
+# would all be shipped into the build context.
+**/node_modules
+**/.git
+.git
+**/.DS_Store
+**/npm-debug.log*
+
+# Not needed inside images
+planning/
+*.pptx
+*.pdf
+docs/
+observability/
+k8s/
+infra/
+ansible/
+swarm/
+chaos/
+load/
+security/
+vault/
+sonar-project.properties

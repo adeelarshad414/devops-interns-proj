@@ -1,14 +1,18 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS deps
-WORKDIR /app/services/dispatch
-COPY services/dispatch/package.json services/dispatch/package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app
+COPY services/dispatch/package.json services/dispatch/package-lock.json ./services/dispatch/
+COPY services/_shared/package.json services/_shared/package-lock.json ./services/_shared/
+# Service deps (express) + shared-lib deps (@opentelemetry/*, pg, ...).
+RUN cd /app/services/dispatch && npm ci --omit=dev --no-audit --no-fund \
+ && cd /app/services/_shared && npm ci --omit=dev --no-audit --no-fund
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -S daig && adduser -S daig -G daig
 COPY --from=deps /app/services/dispatch/node_modules ./services/dispatch/node_modules
+COPY --from=deps /app/services/_shared/node_modules ./services/_shared/node_modules
 COPY services/_shared ./services/_shared
 COPY services/dispatch ./services/dispatch
 USER daig

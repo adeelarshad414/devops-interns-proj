@@ -2,5 +2,16 @@
   "name": "@daig/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared instrumentation, guards and db access for Daig services"
+  "description": "Shared instrumentation, guards and db access for Daig services",
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.79.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.221.0",
+    "@opentelemetry/resources": "^2.10.0",
+    "@opentelemetry/sdk-node": "^0.221.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
+    "pg": "^8.23.0",
+    "pino": "^10.3.1",
+    "prom-client": "^15.1.3"
+  }
 }
