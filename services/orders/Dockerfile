@@ -9,8 +9,10 @@ COPY services/_shared/package.json services/_shared/package-lock.json ./services
 # deps (@opentelemetry/*, pg, prom-client, pino). _shared resolves its requires
 # from services/_shared/node_modules, so that tree must exist in the image.
 # npm ci installs from the committed lockfiles: reproducible, fails loudly on drift.
-RUN cd /app/services/orders  && npm ci --omit=dev --no-audit --no-fund \
- && cd /app/services/_shared && npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app/services/orders
+RUN npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app/services/_shared
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # ---------- runtime base ----------
 FROM node:22-alpine AS base

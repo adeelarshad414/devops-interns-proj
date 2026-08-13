@@ -4,8 +4,10 @@ WORKDIR /app
 COPY services/dispatch/package.json services/dispatch/package-lock.json ./services/dispatch/
 COPY services/_shared/package.json services/_shared/package-lock.json ./services/_shared/
 # Service deps (express) + shared-lib deps (@opentelemetry/*, pg, ...).
-RUN cd /app/services/dispatch && npm ci --omit=dev --no-audit --no-fund \
- && cd /app/services/_shared && npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app/services/dispatch
+RUN npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app/services/_shared
+RUN npm ci --omit=dev --no-audit --no-fund
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
