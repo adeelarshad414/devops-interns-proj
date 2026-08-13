@@ -42,7 +42,7 @@ done
 for f in $staged; do
   case "$f" in
     # Keep in sync with the ALLOWED list in ci.yml / devsecops.yml.
-    .env.example|DUMMY-VALUES.md|README.md|CONTRIBUTING.md|SECURITY.md|TRAINING.md|ASSIGNMENT.md|SOLUTION.md|Makefile|docker-compose.obs.yml|docker-compose.sonar.yml|docker-compose.security.yml|docs/*|.github/*|.githooks/*|k8s/base/secret.yaml|swarm/*|ansible/group_vars/*|security/*|vault/*|chaos/*|services/_shared/*|services/orders/Dockerfile)
+    .env.example|DUMMY-VALUES.md|README.md|CONTRIBUTING.md|SECURITY.md|TRAINING.md|ASSIGNMENT.md|SOLUTION.md|Makefile|docker-compose.obs.yml|docker-compose.sonar.yml|docker-compose.security.yml|docs/*|.github/*|.githooks/*|k8s/base/secret.yaml|swarm/*|ansible/group_vars/*|security/*|vault/*|chaos/*|services/_shared/*|services/orders/Dockerfile|planning/*)
       continue ;;
   esac
   if grep -q 'CHANGE_ME_DEV_ONLY' "$f" 2>/dev/null; then

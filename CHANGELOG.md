@@ -5,7 +5,7 @@ Versioning is [semantic](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Changed — hardening from the expert audit (`AUDIT-2026-expert-review.md`)
+### Changed — hardening from the expert audit (`planning/AUDIT-2026-expert-review.md`)
 
 - **Reproducible builds:** committed `package-lock.json` for orders/kitchen/
   dispatch; Dockerfiles and every workflow now use `npm ci`, not `npm install`

@@ -9,7 +9,7 @@ wrong, and we care about both.
 ## Before you start
 
 ```bash
-git clone <this repo> && cd daig
+git clone https://github.com/adeelarshad414/devops-interns-proj && cd devops-interns-proj
 cp .env.example .env
 cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 make check          # static checks, no Docker needed

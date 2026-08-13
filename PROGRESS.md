@@ -6,7 +6,7 @@ end. Do not delete rows.
 ## Built
 
 > **2026-08-05:** Expert audit fixes applied across containers, k8s, IaC,
-> observability and CI/CD. See `AUDIT-2026-expert-review.md` and the CHANGELOG.
+> observability and CI/CD. See `planning/AUDIT-2026-expert-review.md` and the CHANGELOG.
 > Still not executed at runtime, but k8s (`kubectl kustomize`), compose
 > (`docker compose config`) and all workflow YAML now machine-validate.
 
