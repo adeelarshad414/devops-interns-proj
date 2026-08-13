@@ -85,8 +85,10 @@ jobs:
             security/semgrep/daig.yml
           generateSarif: true
 
+      # Upload only if Semgrep actually produced the SARIF (it may not when the
+      # scan exits non-zero on findings). Guarding avoids a spurious job failure.
       - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
-        if: always()
+        if: always() && hashFiles('semgrep.sarif') != ''
         with:
           sarif_file: semgrep.sarif
           category: semgrep

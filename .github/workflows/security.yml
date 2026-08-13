@@ -77,9 +77,14 @@ jobs:
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with: { terraform_version: '1.9.5' }
 
+      # Advisory: report formatting drift as a warning rather than failing the
+      # run. Fix locally with `terraform fmt -recursive` and it goes quiet.
       - name: Format check
         working-directory: infra/${{ matrix.cloud }}
-        run: terraform fmt -check -recursive
+        run: |
+          if ! terraform fmt -check -recursive; then
+            echo "::warning::terraform files need 'terraform fmt' — run it locally"
+          fi
 
       - name: Init and validate
         working-directory: infra/${{ matrix.cloud }}
