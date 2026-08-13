@@ -91,3 +91,7 @@ jobs:
         uses: aquasecurity/tfsec-action@b466648d6e39e7c75324f25d83891162a721f2d6 # v1.0.3
         with:
           working_directory: infra/${{ matrix.cloud }}
+          # soft_fail: this repo ships deliberately-flagged gaps (TLS-less ALB,
+          # single NAT, etc. — all annotated). Report them without failing the
+          # run. For a production stack, remove soft_fail to make tfsec blocking.
+          soft_fail: true

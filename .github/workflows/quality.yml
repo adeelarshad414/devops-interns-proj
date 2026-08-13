@@ -49,6 +49,9 @@ jobs:
     # Forks cannot read secrets, so the scan would fail for reasons unrelated
     # to code quality. Skip rather than fail confusingly.
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -65,17 +68,16 @@ jobs:
           find coverage-raw -name 'lcov.info' -exec cat {} + > coverage/lcov.info || true
           wc -l coverage/lcov.info
 
+      # SonarQube needs a SONAR_TOKEN repo secret. When it isn't configured
+      # (e.g. a public clone), skip the scan+gate rather than fail the whole
+      # workflow — add the secret to activate it.
       - name: SonarQube scan
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@13990a695682794b53148ff9f6a8b6e22e43955e # v3
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       # Blocks the merge when the gate fails. Without this step the scan is
       # decoration - it reports and nothing happens.
       - name: Enforce the quality gate
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # v1
         timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

@@ -8,6 +8,13 @@ name: DevSecOps
 # running and takes minutes, so it goes last. If a developer waits 12 minutes to
 # learn about a typo, they stop trusting the pipeline - and a pipeline people
 # work around protects nobody.
+#
+# PUBLIC-REPO POSTURE: because this repo *ships planted vulnerabilities on
+# purpose*, the scanners that find them (SAST, IaC policy, image, DAST) are set
+# `continue-on-error` — they still upload findings to the Security tab, they just
+# don't turn the Actions tab permanently red on a teaching target. Secret
+# scanning stays blocking. In a real pipeline, remove those `continue-on-error`
+# lines to restore hard gates.
 
 on:
   push:
@@ -62,7 +69,12 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      # Advisory on this public teaching repo: Semgrep is SUPPOSED to find the
+      # planted vulnerabilities in services/orders/src/insecure.js — that's the
+      # lesson. Findings still upload to the Security tab below. For a real
+      # pipeline, drop `continue-on-error` to make SAST a blocking gate.
       - name: Semgrep
+        continue-on-error: true
         uses: semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
         with:
           config: >-
@@ -113,12 +125,15 @@ jobs:
           # gate people learn to ignore, which is worse than no gate.
           npm audit --audit-level=high
 
+      # OSV-Scanner via its published image (the reusable action isn't a valid
+      # step-action at a pinned SHA). Advisory: npm audit above is the blocking
+      # SCA gate; OSV adds the OSV.dev database as a second source.
       - name: OSV Scanner
-        uses: google/osv-scanner-action@764c91816374ff2d8fc2095dab36eecd42d61638 # v1.9.2
         continue-on-error: true
-        with:
-          scan-args: |-
-            --lockfile=services/${{ matrix.service }}/package-lock.json
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" \
+            ghcr.io/google/osv-scanner:v1.9.2 \
+            --lockfile=/src/services/${{ matrix.service }}/package-lock.json || true
 
   # ------------------------------------------------------------- 4. IaC / POLICY
   iac:
@@ -153,9 +168,13 @@ jobs:
           framework: terraform
           quiet: true
 
+      # Advisory: the OPA/Rego policies intentionally flag the planted
+      # misconfigurations (the labelled k8s Secret, etc.). Reported, not blocking
+      # on this teaching repo; make them blocking for a real pipeline.
       - name: Conftest - Dockerfile policy
+        continue-on-error: true
         run: |
-          set -euo pipefail
+          set -uo pipefail
           for svc in orders kitchen dispatch web; do
             echo "--- $svc"
             docker run --rm -v "$PWD:/project" openpolicyagent/conftest:latest \
@@ -164,6 +183,7 @@ jobs:
           done
 
       - name: Conftest - Kubernetes policy
+        continue-on-error: true
         run: |
           docker run --rm -v "$PWD:/project" openpolicyagent/conftest:latest \
             test --policy security/policy k8s/base/
@@ -199,13 +219,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Advisory here (findings stay visible in the job log); in production this
+      # is a hard gate — drop continue-on-error to block on fixable image CVEs.
       - name: Trivy - image vulnerabilities
+        continue-on-error: true
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
         with:
           image-ref: local/${{ matrix.service }}:${{ github.sha }}
           severity: HIGH,CRITICAL
-          exit-code: '1'          # this gate BLOCKS
-          ignore-unfixed: true    # do not block on something with no available fix
+          exit-code: '1'          # reports non-zero; job continues (advisory)
+          ignore-unfixed: true    # do not flag something with no available fix
 
       - name: Generate SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
@@ -268,12 +291,14 @@ jobs:
           ./scripts/seed.sh || true
 
       - name: OWASP ZAP baseline
+        continue-on-error: true
         uses: zaproxy/action-baseline@66042c8e7e24680119199a017e5b0e8603bf4dae # v0.12.0
         with:
           target: http://localhost:8080
           rules_file_name: security/zap/rules.tsv
           cmd_options: '-I'
-          fail_action: true
+          # Advisory: DAST against a teaching target reports rather than blocks.
+          fail_action: false
 
       - name: Logs on failure
         if: failure()
