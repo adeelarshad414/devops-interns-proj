@@ -10,16 +10,20 @@ Built as the training substrate for the tkxel DevOps intern rotation.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-22-green.svg)](.nvmrc)
 [![deps: 0 known vulns](https://img.shields.io/badge/deps-0%20known%20vulns-brightgreen.svg)](CHANGELOG.md)
-[![status: honest](https://img.shields.io/badge/status-see%20VERIFICATION.md-orange.svg)](VERIFICATION.md)
+[![stack: runs in CI](https://img.shields.io/badge/stack-runs%20in%20CI-brightgreen.svg)](VERIFICATION.md)
 
 </div>
 
 ---
 
-> **Read [`VERIFICATION.md`](VERIFICATION.md) before you trust anything here.**
-> Every file is syntax-checked. **Nothing has been executed.** Those are
-> different claims and this repository does not blur them — which is itself the
-> first thing it teaches.
+> **The core stack now runs, and CI proves it.** Every push builds all four
+> images and stands the full stack up — postgres, redis, orders, kitchen,
+> dispatch, web — then places a real order end-to-end (`Integration - full
+> stack`, a required merge gate). What is **not** yet executed — a live
+> `terraform apply`, the OpenBao end-to-end flow, a real cluster — is tracked
+> honestly in [`VERIFICATION.md`](VERIFICATION.md). "I ran it" and "it should
+> work" are different claims, and this repo does not blur them — which is itself
+> the first thing it teaches.
 
 ---
 

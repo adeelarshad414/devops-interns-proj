@@ -4,8 +4,10 @@ WORKDIR /app
 COPY services/kitchen/package.json services/kitchen/package-lock.json ./services/kitchen/
 COPY services/_shared/package.json services/_shared/package-lock.json ./services/_shared/
 # Service deps (express, undici) + shared-lib deps (@opentelemetry/*, pg, ...).
-RUN cd /app/services/kitchen && npm ci --omit=dev --no-audit --no-fund \
- && cd /app/services/_shared && npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app/services/kitchen
+RUN npm ci --omit=dev --no-audit --no-fund
+WORKDIR /app/services/_shared
+RUN npm ci --omit=dev --no-audit --no-fund
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production

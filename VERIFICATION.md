@@ -4,6 +4,14 @@ Written 3 August 2026. This file exists because "it should work" and "I ran it"
 are different claims, and a teaching repository that blurs them teaches exactly
 the wrong lesson.
 
+> **Update 13 August 2026.** The core stack is no longer just syntax-checked — it
+> **runs, and CI proves it on every push.** A boot-blocking dependency-resolution
+> bug was fixed (`_shared` now owns its deps), the OpenTelemetry stack was bumped
+> (`npm audit` → 0), and an nginx `log_format` misplacement that crashed `web` was
+> corrected. The `Integration` job stands the whole stack up and places a real
+> order. Rows below are updated accordingly; the genuinely un-run parts (cloud
+> `apply`, OpenBao e2e, a real cluster) remain honestly marked.
+
 ## Legend
 
 - **VERIFIED (real)** — executed, output inspected
@@ -23,9 +31,9 @@ the wrong lesson.
 | JSON — Grafana dashboard | VERIFIED (static) | `json.load`, parses |
 | Terraform — AWS, GCP, Azure | **UNVERIFIED** | no `terraform` binary available; brace/paren balance checked only |
 | SQL schema and seed | **UNVERIFIED** | no PostgreSQL available |
-| Dockerfiles ×4 | **UNVERIFIED** | never built; audit changed `npm install`→`npm ci` (lockfiles now present) |
+| Dockerfiles ×4 | **VERIFIED (real)** | built by CI on every push — `Build image` jobs (orders/kitchen/dispatch/web) all green |
 | `docker compose config` — base + observability | VERIFIED (static) | both overlays render with `docker compose config` (merge anchors, limits, alertmanager resolve) |
-| `docker compose up` end to end | **UNVERIFIED** | never brought up |
+| `docker compose up` end to end | **VERIFIED (real)** | CI `Integration` job (a required merge gate): full stack healthy → seeded → smoke-tested → a real order placed orders→kitchen→dispatch |
 | Kubernetes manifests | VERIFIED (static) | `kubectl kustomize k8s/base` builds cleanly — 28 objects, images pinned, no `:latest` |
 | Swarm stack | **UNVERIFIED** | no Docker daemon |
 | Ansible playbooks | **UNVERIFIED** | no `ansible-lint`, no target host |
