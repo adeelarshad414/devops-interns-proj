@@ -6,9 +6,11 @@
 
 Built as the training substrate for the tkxel DevOps intern rotation.
 
+[![CI](https://github.com/adeelarshad414/devops-interns-proj/actions/workflows/ci.yml/badge.svg)](https://github.com/adeelarshad414/devops-interns-proj/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-22-green.svg)](.nvmrc)
-[![Status](https://img.shields.io/badge/status-unverified-orange.svg)](VERIFICATION.md)
+[![deps: 0 known vulns](https://img.shields.io/badge/deps-0%20known%20vulns-brightgreen.svg)](CHANGELOG.md)
+[![status: honest](https://img.shields.io/badge/status-see%20VERIFICATION.md-orange.svg)](VERIFICATION.md)
 
 </div>
 
@@ -18,6 +20,23 @@ Built as the training substrate for the tkxel DevOps intern rotation.
 > Every file is syntax-checked. **Nothing has been executed.** Those are
 > different claims and this repository does not blur them — which is itself the
 > first thing it teaches.
+
+---
+
+## ⚠️ Reading the CI signal (some red is the point)
+
+This repo is a DevSecOps *teaching target*, so a few checks are **designed to
+report findings**:
+
+- **SAST / dependency / IaC-policy jobs** flag the deliberately-planted
+  vulnerabilities (`services/orders/src/insecure.js`, the TLS-less ALB, the
+  inline k8s Secret…). A scanner going red here means it's **working** — that is
+  the lesson (see [`SECURITY.md`](SECURITY.md)).
+- **Core CI** (static checks, unit tests, image build) is expected green — that's
+  the [![CI](https://github.com/adeelarshad414/devops-interns-proj/actions/workflows/ci.yml/badge.svg)](https://github.com/adeelarshad414/devops-interns-proj/actions/workflows/ci.yml)
+  badge above and the required merge gate on `main`.
+- Application dependencies are at **0 known vulnerabilities**; the security jobs
+  fire on the *planted application code*, not on outdated packages.
 
 ---
 

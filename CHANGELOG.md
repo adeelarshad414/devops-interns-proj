@@ -30,6 +30,26 @@ Versioning is [semantic](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The application could not start (shared-lib dependency resolution).**
+  `services/_shared/{telemetry,metrics,db,logger}.js` require `@opentelemetry/*`,
+  `pg`, `prom-client` and `pino`, but those were declared in each *service's*
+  `package.json` — so Node, resolving from `services/_shared/`, never found
+  `services/<svc>/node_modules` and threw `Cannot find module '@opentelemetry/sdk-node'`
+  at boot (the real reason the integration job failed). Fixed by making
+  `_shared` a proper package that owns those deps, trimming services to their
+  direct deps (`express`, `undici`), and updating the Dockerfiles to install and
+  ship `services/_shared/node_modules`. Added a root `.dockerignore` (Docker only
+  honours the context-root one).
+- **Dependency vulnerabilities cleared.** Bumping the OpenTelemetry stack to
+  current versions in `_shared` (the modern API in the code was already
+  compatible) takes `npm audit` to **0 vulnerabilities** across all services and
+  `_shared` (was 43, incl. 4 high / 9 high across the repo per Dependabot).
+- **`node --test test/` → `node --test`.** The path form makes Node 22+ resolve
+  `test/` as a module (`MODULE_NOT_FOUND`); auto-discovery fixes the `orders`
+  unit-test CI job (verified: 3 pass).
+- **Repo layout:** promoted the project to the repository root so GitHub actually
+  runs the workflows (they were dormant under `daig/.github/`); kickoff deck and
+  planning docs archived under `planning/`.
 - **Supply chain:** every GitHub Action pinned to a commit SHA (was mutable
   tags; `checkov-action` was `@master`); `trivy-action` corrected to a valid
   tag (`v0.24.0`); `osv-scanner-action` pinned to `v1.9.2`
