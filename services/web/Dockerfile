@@ -7,7 +7,7 @@
 # To swap in React later: add a `FROM node:22-alpine AS build` stage that runs
 # `npm ci && npm run build`, then COPY --from=build /app/dist to the html dir.
 # Nothing else in the repo changes.
-FROM nginx:1.27-alpine
+FROM nginx:1.31-alpine
 COPY services/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY services/web/public /usr/share/nginx/html
 EXPOSE 8080
