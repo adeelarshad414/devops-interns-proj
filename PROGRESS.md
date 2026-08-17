@@ -53,7 +53,7 @@ end. Do not delete rows.
 
 | # | Item | Owner | Status |
 |---|---|---|---|
-| 1 | `make up` end to end; fix OTel/npm version drift | | **open** |
+| 1 | `make up` end to end; fix OTel/npm version drift | CI | **done** — CI `Integration` runs the full stack green (real order placed); OTel/npm drift resolved |
 | 2 | Build + publish `tkxel/daig-orders:broken`; confirm exit 78 | | **open** |
 | 3 | Confirm a trace crosses all three services in Tempo | | **open** |
 | 4 | `terraform init && validate` on at least the AWS stack | | **open** |
@@ -66,8 +66,8 @@ end. Do not delete rows.
 | 11 | Decide five days vs six (see `docs/COVERAGE.md`) — DevSecOps needs the extra day | | **open** |
 | 12 | Run `make vault-up` and confirm bootstrap completes; expect CLI flag fixes | | **open** |
 | 13 | Run `make vault-app` and confirm logs say `credential_source":"openbao"` | | **open** |
-| 14 | `./scripts/init-repo.sh <remote>` then push; set branch protection + secret scanning | | **open** |
-| 15 | Replace placeholder handles in `.github/CODEOWNERS` | | **open** |
+| 14 | `./scripts/init-repo.sh <remote>` then push; set branch protection + secret scanning | | **done** — public repo; branch protection (PR + required CI), secret scanning + push protection + Dependabot all enabled |
+| 15 | Replace placeholder handles in `.github/CODEOWNERS` | | **done** — CODEOWNERS uses `@adeelarshad414` |
 | 16 | Verify the `[E]` rates in `scripts/cost-model.py` against the official calculators | | **open** |
 | 17 | Set budget alerts before the first `terraform apply` — see `docs/COST.md` | | **open** |
 | 18 | Decide the 7 open questions in `docs/CHARTER.md` §2.3 | | **open** |
