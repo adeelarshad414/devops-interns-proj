@@ -53,6 +53,23 @@ flowchart TB
 
 ---
 
+## 🖼️ The whole system, in diagrams
+
+The master map — **every domain, concept, and tool, and where each lives**:
+
+![Domains & concepts covered](docs/assets/diagram-A-domains-coverage.png)
+
+Flow & conceptual diagrams per domain:
+
+- **[CI/CD → DevSecOps → Deploy](docs/assets/diagram-B-cicd-devsecops-supplychain.png)** — commit → the 7 gates → SBOM + sign → canary → rollback
+- **[Kubernetes](docs/assets/diagram-C-kubernetes.png)** — the control loop and the objects that guard the workload
+- **[IaC — Terraform & Ansible](docs/assets/diagram-D-iac-terraform-ansible.png)** — plan/apply, three clouds, idempotency
+- **[Observability & SRE](docs/assets/diagram-E-observability.png)** — four pillars, the pivot, burn-rate alerting
+- **[Docker](docs/assets/diagram-F-docker-lifecycle.png)** — build → scan → sign → ship → run
+- **[Traffic management](docs/assets/diagram-G-traffic-management.png)** — reverse/forward proxy · load balancer · autoscaling · API gateway
+
+---
+
 ## 🗺️ Pairs with the DevOps Roadmap
 
 [**roadmap.sh/devops**](https://roadmap.sh/devops) is the community-standard map
