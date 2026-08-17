@@ -201,5 +201,5 @@ resource "aws_ecs_service" "service" {
     ignore_changes = [desired_count]
   }
 
-  depends_on = [aws_lb_listener.http]
+  depends_on = [aws_lb_listener.https]
 }
