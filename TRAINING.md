@@ -82,6 +82,7 @@ them here. Where an area has its own dedicated roadmap, it's linked below.
 3. [Containers & Docker](#3-containers--docker)
 4. [Docker Compose](#4-docker-compose)
 5. [Kubernetes (& Swarm)](#5-kubernetes--swarm)
+   - [Traffic management — the five patterns](#traffic-management--the-five-patterns)
 6. [Infrastructure as Code — Terraform & Ansible](#6-infrastructure-as-code--terraform--ansible)
 7. [CI/CD & progressive delivery](#7-cicd--progressive-delivery)
 8. [DevSecOps — the seven gates](#8-devsecops--the-seven-gates)
@@ -295,6 +296,46 @@ swarm/daig-stack.yml daig`.
   actually enforces it.
 - `requests` = floor (scheduling), `limits` = ceiling; memory `request == limit`
   for stateful pods avoids early eviction.
+
+---
+
+## Traffic management — the five patterns
+
+**Concept.** Getting a request to the right place — and controlling what leaves —
+is its own discipline. Five patterns show up across this repo; know which does
+what, and where each one lives.
+
+| Pattern | What it does | Where in this repo |
+|---|---|---|
+| **Reverse proxy** | Guards **ingress**: one front door, path-routes to backends, terminates/forwards headers & trace context | [`services/web/nginx.conf`](services/web/nginx.conf) — nginx routes `/api/*` to orders/kitchen/dispatch, with `X-Forwarded-*`, timeouts, keepalive upstreams and per-IP `limit_req` |
+| **Forward (egress) proxy** | Guards **egress**: outbound calls funnel through an allow-list, everything else refused + logged | [`docker-compose.egress.yml`](docker-compose.egress.yml) + [`security/egress/squid.conf`](security/egress/squid.conf) — `make egress-up` then `make egress-test` (allowed → 200, blocked → 403) |
+| **Load balancer** | Spreads traffic across healthy replicas (L4 or L7) | AWS ALB ([`infra/aws/loadbalancer.tf`](infra/aws/loadbalancer.tf), L7); k8s `Service: LoadBalancer` ([`k8s/base/web.yaml`](k8s/base/web.yaml), L4); Swarm routing mesh ([`swarm/daig-stack.yml`](swarm/daig-stack.yml)); Cloud Run / Container Apps managed LB (with TLS) |
+| **Auto scaling** | Adds/removes capacity to match load — reactive, predictive, or request-based | ECS target-tracking **+ scheduled pre-iftar** ([`infra/aws/autoscaling.tf`](infra/aws/autoscaling.tf)); k8s HPA ×4 ([`k8s/base/hpa.yaml`](k8s/base/hpa.yaml)); Cloud Run concurrency; Container Apps KEDA |
+| **API gateway** | Edge policy: auth, rate limiting, keys/quotas, WAF, versioning | *Lightweight only* — nginx does routing + `limit_req`; the ALB is the L7 entry. **No managed gateway or WAF yet** — that's the production upgrade (AWS HTTP API / API Gateway, GCP API Gateway, Azure APIM + WAFv2/Cloud Armor) |
+
+**Reverse vs forward — the one-line distinction:** a **reverse** proxy sits in
+front of *your servers* and decides what comes **in**; a **forward** proxy sits
+in front of *your clients* and decides what goes **out**. daig has one of each.
+
+**Cheatsheet.**
+
+| Task | Command |
+|---|---|
+| See the reverse proxy route | open `services/web/nginx.conf` · hit `http://localhost:8080/api/orders` |
+| Start the forward proxy | `make egress-up` |
+| Prove the egress allow-list | `make egress-test` |
+| Watch autoscaling (k8s) | `kubectl -n daig get hpa` · drive load with `make load` |
+| The ALB (AWS) | `infra/aws/loadbalancer.tf` (note: HTTP-only TODO — add TLS + WAF for real) |
+
+**Guidelines.**
+- A reverse proxy fronting backends should always set `X-Forwarded-For` /
+  `-Proto` / `Host`, bounded proxy timeouts, and (as a gateway) a rate limit.
+- A forward proxy is only as useful as its **allow-list + logs** — the audit
+  trail is the point.
+- Prefer an **Ingress/API gateway** over one raw L4 LoadBalancer per service
+  (TLS, host/path routing, one LB for the cluster).
+- Autoscaling: scale **out fast, in slow**; for a *predictable* spike, **pre-scale
+  on a schedule** rather than react (see the ECS pre-iftar action).
 
 ---
 

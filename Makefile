@@ -5,6 +5,7 @@ C_OBS        := docker compose -f docker-compose.yml -f docker-compose.obs.yml
 C_VAULT      := docker compose -f docker-compose.yml -f docker-compose.vault.yml
 C_SONAR      := docker compose -f docker-compose.yml -f docker-compose.sonar.yml
 C_SEC        := docker compose -f docker-compose.yml -f docker-compose.security.yml
+C_EGRESS     := docker compose -f docker-compose.yml -f docker-compose.egress.yml
 C_ALL        := docker compose -f docker-compose.yml -f docker-compose.obs.yml -f docker-compose.vault.yml -f docker-compose.security.yml
 
 help: ## Show this help
@@ -96,6 +97,13 @@ scan-sast: ## SAST only (fastest useful gate)
 dast: ## Run the OWASP ZAP baseline against the running stack
 	$(C_SEC) --profile dast run --rm zap
 
+egress-up: ## Start the forward proxy (Squid egress allow-list on :3128)
+	$(C_EGRESS) up -d squid
+	@echo "forward proxy on :3128 - allow-list in security/egress/squid.conf"
+
+egress-test: ## Prove the egress allow-list (allowed=200, blocked=403)
+	$(C_EGRESS) --profile test run --rm egress-test
+
 insecure-on: ## Enable the six deliberate vulnerabilities
 	./chaos/day6-security.sh break
 
@@ -133,5 +141,5 @@ hooks: ## Install the pre-commit hook
 
 .PHONY: help up down nuke logs ps seed smoke psql obs load load-spike \
         vault-up vault-app vault-demo vault-ui vault-seal \
-        sonar sec-up scan scan-sast dast insecure-on insecure-off \
+        sonar sec-up scan scan-sast dast egress-up egress-test insecure-on insecure-off \
         broken check test fmt-check hooks
