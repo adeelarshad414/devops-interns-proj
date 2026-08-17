@@ -8,7 +8,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "undici": "^6.21.1"
+    "express": "^5.1.0",
+    "undici": "^8.0.0"
   }
 }
