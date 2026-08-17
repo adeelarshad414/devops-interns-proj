@@ -4,6 +4,12 @@ variable "region" {
   default     = "eu-west-1"
 }
 
+variable "domain_name" {
+  description = "Domain for the ALB TLS certificate. The default is a placeholder so `terraform validate` passes; supply a real domain (with a Route 53 zone) to apply."
+  type        = string
+  default     = "daig.example.com"
+}
+
 variable "environment" {
   description = "Environment name, used in resource names"
   type        = string
