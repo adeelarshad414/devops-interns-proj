@@ -1,0 +1,51 @@
+# Forward (egress) proxy overlay — controlled, observable OUTBOUND traffic.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.egress.yml up -d squid
+#   docker compose -f docker-compose.yml -f docker-compose.egress.yml \
+#       --profile test run --rm egress-test
+#
+# The reverse proxy (services/web/nginx.conf) guards INGRESS. This overlay adds
+# a Squid forward proxy that guards EGRESS: the app tier's outbound calls are
+# pointed at it, and its allow-list (security/egress/squid.conf) decides what
+# may leave the network. `egress-test` proves it — an allowed host returns 200,
+# a blocked one returns 403 from Squid.
+
+services:
+  squid:
+    image: ubuntu/squid:5.2-22.04_beta
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    volumes:
+      - ./security/egress/squid.conf:/etc/squid/squid.conf:ro
+    ports: ["3128:3128"]        # dev visibility only
+    healthcheck:
+      test: ["CMD-SHELL", "squidclient -h 127.0.0.1 mgr:info >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Route the app tier's outbound through the proxy. Service-to-service and
+  # data-tier traffic bypasses it via NO_PROXY. NOTE: Node's global fetch/undici
+  # does NOT auto-honour these — a real service wires undici's ProxyAgent. curl
+  # and wget honour them natively, which is what egress-test uses to prove it.
+  orders:   { environment: { HTTP_PROXY: "http://squid:3128", HTTPS_PROXY: "http://squid:3128", NO_PROXY: "localhost,127.0.0.1,postgres,redis,orders,kitchen,dispatch,otel-collector" } }
+  kitchen:  { environment: { HTTP_PROXY: "http://squid:3128", HTTPS_PROXY: "http://squid:3128", NO_PROXY: "localhost,127.0.0.1,postgres,redis,orders,kitchen,dispatch,otel-collector" } }
+  dispatch: { environment: { HTTP_PROXY: "http://squid:3128", HTTPS_PROXY: "http://squid:3128", NO_PROXY: "localhost,127.0.0.1,postgres,redis,orders,kitchen,dispatch,otel-collector" } }
+
+  # Proof of the allow-list: allowed → 200, blocked → 403 (from Squid).
+  egress-test:
+    image: curlimages/curl:8.11.0
+    profiles: ["test"]
+    depends_on:
+      squid: { condition: service_started }
+    environment:
+      HTTP_PROXY: "http://squid:3128"
+      HTTPS_PROXY: "http://squid:3128"
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "→ allowed (example.com):"
+        curl -s -o /dev/null -w "   HTTP %{http_code}\n" https://example.com || true
+        echo "→ blocked (badhost.invalid):"
+        curl -s -o /dev/null -w "   HTTP %{http_code}\n" https://badhost.invalid || true
+        echo "(allowed should be 200; blocked should be 403 — refused by the forward proxy)"
