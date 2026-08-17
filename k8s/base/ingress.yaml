@@ -1,0 +1,30 @@
+# One Ingress for the cluster: TLS termination + host/path routing in front of
+# the `web` ClusterIP. Needs an ingress controller (e.g. ingress-nginx) and, for
+# the cert, cert-manager with a ClusterIssuer named `letsencrypt`. On a bare kind
+# cluster this object applies but nothing serves it — install a controller first.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  annotations:
+    # cert-manager issues and auto-renews the TLS cert into the secret below.
+    cert-manager.io/cluster-issuer: letsencrypt
+    # Force HTTPS; the controller redirects :80 → :443.
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - daig.example.com
+      secretName: web-tls
+  rules:
+    - host: daig.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80
