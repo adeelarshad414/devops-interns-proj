@@ -57,6 +57,11 @@ report findings**:
 3. **[`SOLUTION.md`](SOLUTION.md)** — step-by-step worked answers and checkpoint
    solutions. **Instructor-held — don't hand it to interns.**
 
+> 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
+> canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
+> each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),
+> [terraform](https://roadmap.sh/terraform), [devsecops](https://roadmap.sh/devsecops), …).
+
 ---
 
 ## Contents

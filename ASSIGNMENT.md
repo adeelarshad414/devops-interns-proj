@@ -7,6 +7,10 @@ evidence each task asks for in a single `submission/` folder (screenshots,
 command output, short notes).
 **Worked answers:** [`SOLUTION.md`](SOLUTION.md) — instructor-held. Try every task
 before looking.
+**Bigger picture:** each phase maps to a track on the
+[DevOps Roadmap](https://roadmap.sh/devops) — finishing this capstone is how you
+*earn* those nodes instead of just reading them (see the mapping in
+[`TRAINING.md`](TRAINING.md#-pairs-with-the-devops-roadmap)).
 
 ---
 
