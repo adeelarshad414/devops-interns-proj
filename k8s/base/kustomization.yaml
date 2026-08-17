@@ -13,7 +13,9 @@ resources:
   - kitchen.yaml
   - dispatch.yaml
   - web.yaml
+  - ingress.yaml
   - hpa.yaml
+  - scheduled-scale.yaml
 
 # `labels` replaces the deprecated `commonLabels`. includeSelectors:false keeps
 # these off pod selectors, so changing a label later can't orphan a ReplicaSet.

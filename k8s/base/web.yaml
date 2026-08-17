@@ -56,12 +56,12 @@ kind: Service
 metadata:
   name: web
 spec:
-  # ClusterIP + Ingress is the production shape (TLS termination, host/path
-  # routing, one LB for the cluster). A raw LoadBalancer per service means no
-  # TLS and one cloud LB each. See ingress.yaml — enable it once an ingress
-  # controller (and cert-manager) are installed; until then keep LoadBalancer
-  # for a controller-free demo cluster.
-  type: LoadBalancer
+  # ClusterIP behind an Ingress is the production shape: TLS termination,
+  # host/path routing, and ONE load balancer for the whole cluster instead of a
+  # raw L4 LoadBalancer (and a cloud LB) per service. The Ingress is in
+  # ingress.yaml. On a controller-free demo cluster, reach it with
+  # `kubectl -n daig port-forward svc/web 8080:80`.
+  type: ClusterIP
   selector: { app: web }
   ports:
     - name: http

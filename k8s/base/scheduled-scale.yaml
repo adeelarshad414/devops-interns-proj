@@ -1,0 +1,85 @@
+# Scheduled scaling — the Kubernetes parity for infra/aws/autoscaling.tf's
+# pre-iftar action. The HPA reacts to CPU; a predictable spike is better
+# ANTICIPATED than reacted to, so two CronJobs raise and lower the orders HPA
+# floor around iftar. (KEDA's cron scaler does this natively; this does it with
+# stock kubectl so there's nothing extra to install.)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hpa-scaler
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: hpa-scaler
+rules:
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hpa-scaler
+subjects:
+  - kind: ServiceAccount
+    name: hpa-scaler
+roleRef:
+  kind: Role
+  name: hpa-scaler
+  apiGroup: rbac.authorization.k8s.io
+---
+# Pre-iftar: raise the orders HPA floor before the spike (18:00 PKT = 13:00 UTC).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pre-iftar-scale
+spec:
+  schedule: "0 13 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          serviceAccountName: hpa-scaler
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile: { type: RuntimeDefault }
+          containers:
+            - name: scale
+              image: bitnami/kubectl:1.31
+              args: ["patch", "hpa", "orders", "--type=merge", "-p", '{"spec":{"minReplicas":10}}']
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: { drop: ["ALL"] }
+---
+# Post-iftar: lower it back to the normal floor (20:30 PKT = 15:30 UTC).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: post-iftar-scale
+spec:
+  schedule: "30 15 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          serviceAccountName: hpa-scaler
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile: { type: RuntimeDefault }
+          containers:
+            - name: scale
+              image: bitnami/kubectl:1.31
+              args: ["patch", "hpa", "orders", "--type=merge", "-p", '{"spec":{"minReplicas":3}}']
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: { drop: ["ALL"] }
