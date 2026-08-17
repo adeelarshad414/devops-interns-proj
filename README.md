@@ -57,6 +57,10 @@ report findings**:
 3. **[`SOLUTION.md`](SOLUTION.md)** — step-by-step worked answers and checkpoint
    solutions. **Instructor-held — don't hand it to interns.**
 
+> 🎤 **Running a kickoff?** [`docs/daig-intern-bootcamp.pptx`](docs/daig-intern-bootcamp.pptx)
+> is the instructor-led deck — 18 slides (foundations + the hands-on track) with
+> speaker notes on every slide. [PDF](docs/daig-intern-bootcamp.pdf) for quick viewing.
+
 > 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
 > canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
 > each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),
