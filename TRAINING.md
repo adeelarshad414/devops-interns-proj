@@ -53,6 +53,28 @@ flowchart TB
 
 ---
 
+## 🗺️ Pairs with the DevOps Roadmap
+
+[**roadmap.sh/devops**](https://roadmap.sh/devops) is the community-standard map
+of *what* to learn. This handbook and [daig](README.md) are the *do it* — most
+nodes on that roadmap have a place you can actually break, diagnose, and gate
+them here. Where an area has its own dedicated roadmap, it's linked below.
+
+| Area in this handbook | Track it on roadmap.sh |
+|---|---|
+| §1 Linux & the runtime | [/linux](https://roadmap.sh/linux) |
+| §3 Containers · §4 Compose | [/docker](https://roadmap.sh/docker) |
+| §5 Kubernetes | [/kubernetes](https://roadmap.sh/kubernetes) |
+| §6 IaC — Terraform & Ansible | [/terraform](https://roadmap.sh/terraform) · [/aws](https://roadmap.sh/aws) |
+| §7 CI/CD · §10 Observability & SRE | [/devops](https://roadmap.sh/devops) |
+| §8 DevSecOps · §9 Secrets | [/devsecops](https://roadmap.sh/devsecops) · [/cyber-security](https://roadmap.sh/cyber-security) |
+
+> **How to use them together:** read a node on the roadmap → find the matching
+> section here → do the exercise in [`ASSIGNMENT.md`](ASSIGNMENT.md) → mark the
+> node done because you *did* it, not because you watched a video.
+
+---
+
 ## Contents
 
 1. [Linux & the runtime](#1-linux--the-runtime)
