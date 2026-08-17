@@ -38,7 +38,7 @@ the wrong lesson.
 | Swarm stack | **UNVERIFIED** | no Docker daemon |
 | Ansible playbooks | **UNVERIFIED** | no `ansible-lint`, no target host |
 | Grafana dashboard panels | **UNVERIFIED** | JSON parses; never rendered |
-| GitHub Actions workflows | **UNVERIFIED as runs** | YAML parses; never executed on a runner |
+| GitHub Actions workflows | **VERIFIED (real)** | all five workflows run green on `main`; CI (static · unit · build · integration) is a required merge gate |
 | SonarQube scan | **UNVERIFIED** | never run against the code |
 | Semgrep rules | **UNVERIFIED** | YAML parses; patterns never matched against real code. Custom rule syntax is the likeliest thing here to need adjusting. |
 | OPA/Rego policies ×3 | **UNVERIFIED** | never run through `conftest` or `opa eval`. Rego v1 syntax, unexercised. |

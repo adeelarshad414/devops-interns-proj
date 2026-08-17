@@ -1,10 +1,13 @@
 <div align="center">
 
+<img src="docs/assets/01-cover-poster.png" alt="daig — Learn DevOps by Breaking It on Purpose" width="880" />
+
 # Daig
 
 **A deliberately breakable three-tier platform for teaching DevOps.**
+*(aka the DevOps Interns Project — Cloud · DevOps · SRE · DevSecOps · Platform Engineering)*
 
-Built as the training substrate for the tkxel DevOps intern rotation.
+Built as the training substrate for a DevOps intern rotation.
 
 [![CI](https://github.com/adeelarshad414/devops-interns-proj/actions/workflows/ci.yml/badge.svg)](https://github.com/adeelarshad414/devops-interns-proj/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
