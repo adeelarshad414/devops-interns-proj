@@ -64,6 +64,10 @@ report findings**:
 > 🃏 **Print for every intern:** the one-page [cheat-card](docs/assets/intern-cheat-card.pdf)
 > — the loop, the commands, the diagnostic pivot, the 7-phase checklist, and the golden rules.
 
+> 🖼️ **See it in diagrams:** a [domains & concepts coverage map](docs/assets/diagram-A-domains-coverage.png)
+> plus flow diagrams for CI/CD, Kubernetes, IaC, observability, Docker and traffic — in
+> [`TRAINING.md`](TRAINING.md#-the-whole-system-in-diagrams).
+
 > 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
 > canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
 > each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),
