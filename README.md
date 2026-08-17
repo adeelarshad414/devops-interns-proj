@@ -61,6 +61,9 @@ report findings**:
 > is the instructor-led deck — 18 slides (foundations + the hands-on track) with
 > speaker notes on every slide. [PDF](docs/daig-intern-bootcamp.pdf) for quick viewing.
 
+> 🃏 **Print for every intern:** the one-page [cheat-card](docs/assets/intern-cheat-card.pdf)
+> — the loop, the commands, the diagnostic pivot, the 7-phase checklist, and the golden rules.
+
 > 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
 > canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
 > each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),
