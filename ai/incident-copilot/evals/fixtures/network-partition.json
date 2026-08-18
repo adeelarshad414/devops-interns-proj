@@ -1,0 +1,27 @@
+{
+  "ground_truth": "network-db-unreachable",
+  "note": "Day 1 network chaos: DB connectivity cut. Services up but readiness fails with connection errors; no restarts yet.",
+  "evidence": {
+    "window": "last 5m",
+    "slo": {"availability_target": 0.999, "latency_p95_target_s": 1.0},
+    "metrics": {
+      "orders_availability_ratio5m": 0.62,
+      "orders_error_ratio5m": 0.38,
+      "orders_p95_latency_s": 5.0,
+      "dispatch_p95_latency_s": 5.0,
+      "kitchen_cpu_cores": 0.05,
+      "burn_rate_1h": 380.0,
+      "up": {"orders": 1, "kitchen": 1, "dispatch": 1, "postgres": 1},
+      "restarts_5m": {"orders": 0, "kitchen": 0, "dispatch": 0}
+    },
+    "logs": [
+      {"service": "orders", "level": "error", "msg": "connection refused connecting to postgres:5432 (ECONNREFUSED)", "count": 120},
+      {"service": "dispatch", "level": "error", "msg": "getaddrinfo ENOTFOUND postgres (DNS)", "count": 90}
+    ],
+    "traces": [
+      {"name": "POST /api/orders", "p95_ms": 5000, "db_spans": 1,
+       "note": "single DB span that times out - not an N+1"}
+    ],
+    "recent_deploys": []
+  }
+}

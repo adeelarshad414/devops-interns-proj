@@ -115,6 +115,13 @@ broken: ## Build the kickoff exercise image (exits 78)
 	docker build --target broken -f services/orders/Dockerfile -t tkxel/daig-orders:broken .
 	@echo "now run: docker run --rm tkxel/daig-orders:broken"
 
+# ---------------------------------------------------------------- ai / aiops
+copilot: ## AI SRE incident copilot demo on a recorded incident (uses Claude if ANTHROPIC_API_KEY is set, else the offline baseline)
+	python3 ai/incident-copilot/copilot.py --fixture ai/incident-copilot/evals/fixtures/latency-n1.json
+
+copilot-eval: ## Grade the copilot against labelled fixtures (baseline; Claude if a key is set)
+	python3 ai/incident-copilot/evals/run_evals.py
+
 # ---------------------------------------------------------------- checks
 check: ## Static checks - no Docker or network needed
 	@echo "javascript..."
@@ -142,4 +149,4 @@ hooks: ## Install the pre-commit hook
 .PHONY: help up down nuke logs ps seed smoke psql obs load load-spike \
         vault-up vault-app vault-demo vault-ui vault-seal \
         sonar sec-up scan scan-sast dast egress-up egress-test insecure-on insecure-off \
-        broken check test fmt-check hooks
+        broken copilot copilot-eval check test fmt-check hooks

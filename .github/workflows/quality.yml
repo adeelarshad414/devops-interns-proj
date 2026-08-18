@@ -111,3 +111,35 @@ jobs:
       - name: ansible-lint (advisory)
         working-directory: ansible
         run: ansible-lint || true
+
+  # Evals-as-a-gate for the AI incident copilot. The baseline eval is offline and
+  # deterministic (stdlib only) - it protects the plumbing on every PR. The real
+  # Claude eval runs only when an ANTHROPIC_API_KEY secret is configured, the same
+  # skip-when-absent pattern as the SonarQube gate above.
+  incident-copilot:
+    name: AI incident copilot eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    # The `secrets` context isn't allowed in `if`, so map the key to env at job
+    # level and gate the Claude step on `env.ANTHROPIC_API_KEY` instead.
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Blank the key for this step so it always runs the offline heuristic
+      # baseline, gated at 100% - guarding the fixtures + plumbing on every PR.
+      - name: Baseline eval (offline, deterministic)
+        env:
+          ANTHROPIC_API_KEY: ""
+        run: python3 ai/incident-copilot/evals/run_evals.py --min-acc1 1.0
+
+      # The real evals-as-a-gate: install the SDK and fail the build if Claude's
+      # accuracy@1 regresses below the floor. Runs only when the secret is set.
+      - name: Claude eval (only when a key is configured)
+        if: env.ANTHROPIC_API_KEY != ''
+        run: |
+          python3 -m pip install --quiet --break-system-packages -r ai/incident-copilot/requirements.txt
+          python3 ai/incident-copilot/evals/run_evals.py --min-acc1 0.6

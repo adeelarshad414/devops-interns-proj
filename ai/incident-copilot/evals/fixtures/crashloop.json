@@ -1,0 +1,24 @@
+{
+  "ground_truth": "service-crashloop",
+  "note": "Day 3 crashloop: orders keeps restarting, readiness failing, up flaps.",
+  "evidence": {
+    "window": "last 5m",
+    "slo": {"availability_target": 0.999, "latency_p95_target_s": 1.0},
+    "metrics": {
+      "orders_availability_ratio5m": 0.91,
+      "orders_error_ratio5m": 0.09,
+      "orders_p95_latency_s": 0.6,
+      "dispatch_p95_latency_s": 0.33,
+      "kitchen_cpu_cores": 0.12,
+      "burn_rate_1h": 40.0,
+      "up": {"orders": 0, "kitchen": 1, "dispatch": 1, "postgres": 1},
+      "restarts_5m": {"orders": 6, "kitchen": 0, "dispatch": 0}
+    },
+    "logs": [
+      {"service": "orders", "level": "error", "msg": "readiness check failed: database unreachable", "count": 40},
+      {"service": "orders", "level": "fatal", "msg": "bootstrap failed", "count": 6}
+    ],
+    "traces": [],
+    "recent_deploys": [{"service": "orders", "at": "6m ago", "tag": "1.0.1"}]
+  }
+}

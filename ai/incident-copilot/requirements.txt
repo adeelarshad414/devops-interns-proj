@@ -1,0 +1,3 @@
+# The copilot's collectors and heuristic baseline are stdlib-only (they run with
+# no pip install). Only the live Claude reasoner needs the SDK.
+anthropic>=0.40

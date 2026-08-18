@@ -1,0 +1,28 @@
+{
+  "ground_truth": "dispatch-n1-query",
+  "note": "CHAOS_SLOW_DISPATCH=true: dispatch p95 blows out, error rate normal, trace shows sequential per-rider DB queries.",
+  "evidence": {
+    "window": "last 5m",
+    "slo": {"availability_target": 0.999, "latency_p95_target_s": 1.0},
+    "metrics": {
+      "orders_availability_ratio5m": 0.9994,
+      "orders_error_ratio5m": 0.0005,
+      "orders_p95_latency_s": 0.44,
+      "dispatch_p95_latency_s": 3.9,
+      "kitchen_cpu_cores": 0.14,
+      "dispatch_cpu_cores": 0.21,
+      "burn_rate_1h": 0.5,
+      "up": {"orders": 1, "kitchen": 1, "dispatch": 1, "postgres": 1},
+      "restarts_5m": {"orders": 0, "kitchen": 0, "dispatch": 0}
+    },
+    "logs": [
+      {"service": "dispatch", "level": "info", "msg": "rider assigned", "count": 210},
+      {"service": "kitchen", "level": "info", "msg": "kitchen decision", "count": 208}
+    ],
+    "traces": [
+      {"name": "POST /api/dispatch/assign", "p95_ms": 3900, "db_spans": 42,
+       "note": "42 sequential child DB spans (one count query per rider)"}
+    ],
+    "recent_deploys": []
+  }
+}
