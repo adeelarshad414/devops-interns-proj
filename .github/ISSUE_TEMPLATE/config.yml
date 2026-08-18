@@ -3,6 +3,6 @@ contact_links:
   - name: Verification status
     url: https://github.com/adeelarshad414/devops-interns-proj/blob/main/VERIFICATION.md
     about: Check whether the area you are reporting has actually been executed yet
-  - name: Instructor notes
-    url: https://github.com/adeelarshad414/devops-interns-proj/blob/main/docs/INSTRUCTOR.md
-    about: Answers to the chaos exercises. Interns should not read this.
+  - name: Instructor notes (private)
+    url: https://github.com/adeelarshad414/devops-interns-proj-solutions
+    about: Answers to the chaos exercises. Instructor-held; interns don't get access.

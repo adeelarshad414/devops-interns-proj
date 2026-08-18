@@ -68,7 +68,7 @@ running the code.
 | 3 | [`03-CHARTER-objective-milestones-tasks.md`](03-CHARTER-objective-milestones-tasks.md) | **you first** | Objective, 24 checkpoints, 8 milestones, 16 targets, 57 tasks. |
 | 4 | [`04-COVERAGE-skills-matrix.md`](04-COVERAGE-skills-matrix.md) | you | The scope decision — 20 skills, 6 days, honest depth for each. |
 | 5 | [`05-CHEATSHEET-handout.md`](05-CHEATSHEET-handout.md) | **interns** | Commands and the diagnostic ladder. No answers — safe to print. |
-| 6 | [`06-SOLUTIONS-instructor-only.md`](06-SOLUTIONS-instructor-only.md) | **you only** | Worked steps for every task, chaos variant, and checkpoint. |
+| 6 | the private solutions repo | **you only** | Worked steps for every task, chaos variant, and checkpoint. |
 | 7 | [`07-DEVSECOPS-guide.md`](07-DEVSECOPS-guide.md) | you | Seven gates, six vulnerabilities, supply chain, secrets. |
 | 8 | [`08-DAIG-README.md`](08-DAIG-README.md) | both | The platform README, with architecture and flow diagrams. |
 | 9 | [`09-ARCHITECTURE.md`](09-ARCHITECTURE.md) | you | Eighteen design decisions and the alternatives rejected. |

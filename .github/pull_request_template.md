@@ -18,7 +18,7 @@
      pedagogically wrong. -->
 
 - [ ] Does not remove a deliberate defect (see the table in README)
-- [ ] If it changes a deliberate defect, `docs/INSTRUCTOR.md` is updated
+- [ ] If it changes a deliberate defect, the private solutions repo is updated
 - [ ] If it changes a day's exercise, that `docs/DAYn.md` is updated
 
 ## Checks

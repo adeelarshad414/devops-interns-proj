@@ -54,8 +54,10 @@ report findings**:
    Vault → SRE → chaos), each grounded in a real file here.
 2. **[`ASSIGNMENT.md`](ASSIGNMENT.md)** — the capstone project: goal, seven
    phased tasks in sequence, required evidence, and an acceptance checklist.
-3. **[`SOLUTION.md`](SOLUTION.md)** — step-by-step worked answers and checkpoint
-   solutions. **Instructor-held — don't hand it to interns.**
+3. **Worked answers** — step-by-step solutions and checkpoint answers.
+   **Instructor-held in the private
+   [devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions)
+   repo** so this public repo stays answer-free. Request access from the maintainer.
 
 > 🎤 **Running a kickoff?** [`docs/daig-intern-bootcamp.pptx`](docs/daig-intern-bootcamp.pptx)
 > is the instructor-led deck — 18 slides (foundations + the hands-on track) with
@@ -475,8 +477,8 @@ Fifteen markdown files, each with one job. **Read them in this order.**
 | File | For |
 |---|---|
 | [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md) | **Hand out on Day 1.** Commands and the diagnostic ladder, no answers. |
-| [`docs/SOLUTIONS.md`](docs/SOLUTIONS.md) | **Instructor-held.** Step-by-step for every task, chaos variant and checkpoint question. |
-| [`docs/INSTRUCTOR.md`](docs/INSTRUCTOR.md) | **Answers, pacing, cost control. Not for interns.** |
+| _Worked solutions_ (private repo) | **Instructor-held** in [devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions) — `SOLUTION.md`, `docs/SOLUTIONS.md`. Step-by-step for every task, chaos variant and checkpoint question. |
+| _Instructor notes_ (private repo) | **Answers, pacing, cost control** — `docs/INSTRUCTOR.md` in the private repo. Not for interns. |
 | [`docs/DAY1.md`](docs/DAY1.md) → [`DAY5.md`](docs/DAY5.md) | Per-day run sheets: build, chaos hour, deliverable |
 
 ### Topic guides
@@ -508,8 +510,9 @@ Fifteen markdown files, each with one job. **Read them in this order.**
 - **Every claim is falsifiable.** No "should work" presented as "works".
 - **`VERIFICATION.md` is the authority** on execution status. Not the README, not
   a commit message.
-- **Instructor material is separate** and marked. `docs/INSTRUCTOR.md` contains
-  answers; nothing else does.
+- **Instructor material is separate** and kept private. Answers live in the
+  [devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions)
+  repo; nothing in this public repo does.
 - **Deliberate defects are labelled at the point of definition**, not only in
   documentation, because that is where someone reading the code will be.
 
@@ -619,8 +622,7 @@ daig/
     ├── COVERAGE.md               the scope decision
     ├── COST.md                   what it costs on each cloud
     ├── CHEATSHEET.md             hand out Day 1. commands only.
-    ├── SOLUTIONS.md              instructor-held. worked answers.
-    ├── INSTRUCTOR.md             answers. not for interns.
+    │                             (worked answers → private solutions repo)
     ├── DAY1–DAY5.md
     └── GIT.md · DOCKER-NETWORKS-VOLUMES.md · SWARM.md
         · SONARQUBE.md · DEVSECOPS.md
@@ -696,8 +698,9 @@ Nothing here is an accident.
 point at. What is *missing* is a business rule. That is why code review exists,
 and it is the single most valuable thing in this repository.
 
-**Instructors:** [`docs/INSTRUCTOR.md`](docs/INSTRUCTOR.md) has every answer.
-Interns should not read it.
+**Instructors:** the private
+[devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions)
+repo has every answer (`docs/INSTRUCTOR.md`). Request access; interns don't get it.
 
 ---
 

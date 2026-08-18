@@ -146,7 +146,7 @@ otherwise look like under-engineering.
 | **NFR-42** | Every defect labelled in place | At the point of definition, not only in docs | Implemented |
 | **NFR-43** | Every defect teaches something distinct | No two defects diagnosed the same way | Implemented |
 | **NFR-44** | Zero-dependency load generator | Runs before anything is installed, offline | Implemented |
-| **NFR-45** | Instructor material separated | Answers only in `docs/INSTRUCTOR.md` | Implemented |
+| **NFR-45** | Instructor material separated | Answers only in the private solutions repo | Implemented |
 
 ---
 

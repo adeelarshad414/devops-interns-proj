@@ -18,7 +18,7 @@ root (e.g. `daig/k8s/…` → `k8s/…`).
 | `03-CHARTER-objective-milestones-tasks.md` | Objective, milestones, 57 tasks |
 | `04-COVERAGE-skills-matrix.md` | Scope decision: 20 skills, depth per skill |
 | `05-CHEATSHEET-handout.md` | Early cheatsheet draft (see root `docs/CHEATSHEET.md`) |
-| `06-SOLUTIONS-instructor-only.md` | Early solutions draft (see root `docs/SOLUTIONS.md`) |
+| _(removed)_ | Early solutions draft — moved to the private [devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions) repo |
 | `07-DEVSECOPS-guide.md` … `12-COST-estimate.md` | Guide/architecture/requirements/deployment/cost |
 | `12-cost-model.py` | Deterministic cost model |
 | `AUDIT-2026-expert-review.md` | Expert platform audit (findings resolved — see root CHANGELOG) |
@@ -27,4 +27,4 @@ root (e.g. `daig/k8s/…` → `k8s/…`).
 
 For the **live curriculum**, start at the repository root:
 [`../TRAINING.md`](../TRAINING.md) → [`../ASSIGNMENT.md`](../ASSIGNMENT.md) →
-[`../SOLUTION.md`](../SOLUTION.md).
+the private solutions repo.

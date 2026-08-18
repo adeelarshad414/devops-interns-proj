@@ -6,7 +6,7 @@ end-to-end, then keep it open as a reference while you do
 [`ASSIGNMENT.md`](ASSIGNMENT.md).
 
 > This is the *learner-safe* reference — no exercise answers. Worked solutions
-> live in [`SOLUTION.md`](SOLUTION.md) (instructor-held). The day-by-day command
+> live in the private [devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions) repo (instructor-held). The day-by-day command
 > card is [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md).
 
 ## How to read this

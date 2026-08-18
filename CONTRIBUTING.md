@@ -27,8 +27,9 @@ left.
 Several things are broken on purpose. They are listed in the README table and in
 `SECURITY.md`. A pull request that "fixes" the N+1 in `dispatch` removes Day 4.
 
-If you want to change a deliberate defect, update `docs/INSTRUCTOR.md` and the
-relevant `docs/DAYn.md` in the same commit, and say why in the PR.
+If you want to change a deliberate defect, update the matching answer in the
+private [solutions repo](https://github.com/adeelarshad414/devops-interns-proj-solutions)
+and the relevant `docs/DAYn.md` in the same commit, and say why in the PR.
 
 ### 2. Verified (real) and verified (static) are different claims
 

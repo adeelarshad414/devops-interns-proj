@@ -421,8 +421,8 @@ Fifteen markdown files, each with one job. **Read them in this order.**
 | File | For |
 |---|---|
 | [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md) | **Hand out on Day 1.** Commands and the diagnostic ladder, no answers. |
-| [`docs/SOLUTIONS.md`](docs/SOLUTIONS.md) | **Instructor-held.** Step-by-step for every task, chaos variant and checkpoint question. |
-| [`docs/INSTRUCTOR.md`](docs/INSTRUCTOR.md) | **Answers, pacing, cost control. Not for interns.** |
+| the private solutions repo | **Instructor-held.** Step-by-step for every task, chaos variant and checkpoint question. |
+| the private solutions repo | **Answers, pacing, cost control. Not for interns.** |
 | [`docs/DAY1.md`](docs/DAY1.md) → [`DAY5.md`](docs/DAY5.md) | Per-day run sheets: build, chaos hour, deliverable |
 
 ### Topic guides
@@ -454,7 +454,7 @@ Fifteen markdown files, each with one job. **Read them in this order.**
 - **Every claim is falsifiable.** No "should work" presented as "works".
 - **`VERIFICATION.md` is the authority** on execution status. Not the README, not
   a commit message.
-- **Instructor material is separate** and marked. `docs/INSTRUCTOR.md` contains
+- **Instructor material is separate** and marked. the private solutions repo contains
   answers; nothing else does.
 - **Deliberate defects are labelled at the point of definition**, not only in
   documentation, because that is where someone reading the code will be.
@@ -642,7 +642,7 @@ Nothing here is an accident.
 point at. What is *missing* is a business rule. That is why code review exists,
 and it is the single most valuable thing in this repository.
 
-**Instructors:** [`docs/INSTRUCTOR.md`](docs/INSTRUCTOR.md) has every answer.
+**Instructors:** the private solutions repo has every answer.
 Interns should not read it.
 
 ---

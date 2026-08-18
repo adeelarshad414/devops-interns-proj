@@ -2,7 +2,7 @@
 
 **Hand this out on Day 1.** It contains commands, not answers — the exercises
 still work with this open in front of you. Worked solutions are in
-`docs/SOLUTIONS.md`, released after each day closes.
+the private solutions repo, released after each day closes.
 
 Print it. You will use it more than any slide.
 

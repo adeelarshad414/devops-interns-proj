@@ -1,8 +1,8 @@
 # Cheat sheet
 
 **Hand this out on Day 1.** It contains commands, not answers — the exercises
-still work with this open in front of you. Worked solutions are in
-`docs/SOLUTIONS.md`, released after each day closes.
+still work with this open in front of you. Worked solutions are instructor-held
+in the private solutions repo, released after each day closes.
 
 Print it. You will use it more than any slide.
 
