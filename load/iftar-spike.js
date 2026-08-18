@@ -114,8 +114,13 @@ function report(label) {
   report('total');
 
   const errorRate = stats.sent ? (stats.failed + stats.shed) / stats.sent : 0;
-  console.log(`\nerror rate ${(errorRate * 100).toFixed(2)}%  (SLO allows 0.10%)`);
-  if (errorRate > 0.001) {
+  const sloMax = Number(process.env.SLO_MAX_ERROR_RATE || 0.001);
+  console.log(`\nerror rate ${(errorRate * 100).toFixed(2)}%  (SLO allows ${(sloMax * 100).toFixed(2)}%)`);
+  const breached = errorRate > sloMax;
+  if (breached) {
     console.log('You just burned error budget. That is the exercise.');
   }
+  // Exit non-zero on breach so this doubles as a real CI / SLA gate instead of a
+  // demo that always passes. Set SLO_MAX_ERROR_RATE to tune the threshold.
+  process.exit(breached ? 1 : 0);
 })().catch(e => { console.error(e.message); process.exit(1); });

@@ -5,13 +5,14 @@
 const express = require('express');
 const { registry, httpMetrics } = require('../../_shared/metrics');
 const { makePool } = require('../../_shared/db');
+const { installGracefulShutdown } = require('../../_shared/shutdown');
 const log = require('../../_shared/logger').build('dispatch');
 
 const SERVICE = 'dispatch';
 
 module.exports = function startServer(config) {
   const PORT = Number(process.env.PORT || 3003);
-  const { q } = makePool(SERVICE, config.DATABASE_URL);
+  const { pool, q } = makePool(SERVICE, config.DATABASE_URL);
 
   log.info({ credential_source: config.source }, 'configuration resolved');
 
@@ -105,6 +106,6 @@ module.exports = function startServer(config) {
   });
 
   const server = app.listen(PORT, () => log.info({ port: PORT }, `${SERVICE} listening`));
-  process.on('SIGTERM', () => server.close(() => process.exit(0)));
+  installGracefulShutdown({ server, pool, log });
   return server;
 };

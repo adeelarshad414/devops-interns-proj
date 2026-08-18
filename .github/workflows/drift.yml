@@ -1,0 +1,65 @@
+name: Terraform drift
+
+# Config drift is what's actually deployed silently diverging from what's in Git
+# - a console hotfix, a half-applied change, a manual scale. `terraform validate`
+# (in security.yml) cannot see it; only a periodic `plan` against real state can.
+#
+# This needs two things the repo deliberately leaves as class exercises: cloud
+# credentials and a configured remote backend (see the commented backend blocks
+# in infra/*/versions.tf and infra/README.md). Until a per-cloud deploy secret is
+# set it SKIPS cleanly - exactly like the SonarQube gate. Set the secret and wire
+# the OIDC auth step to turn this into a live drift detector.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # weekly, Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # for OIDC cloud auth once the auth step is wired
+
+concurrency:
+  group: drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Plan / drift - ${{ matrix.cloud }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { cloud: aws,   secret_name: AWS_DEPLOY_ROLE_ARN }
+          - { cloud: gcp,   secret_name: GCP_WORKLOAD_IDP }
+          - { cloud: azure, secret_name: AZURE_CLIENT_ID }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with: { terraform_version: '1.9.5' }
+
+      - name: Is this cloud configured for drift detection?
+        id: gate
+        env:
+          CONFIGURED: ${{ secrets[matrix.secret_name] != '' }}
+        run: echo "ready=$CONFIGURED" >> "$GITHUB_OUTPUT"
+
+      - name: Skip - ${{ matrix.cloud }} not configured
+        if: steps.gate.outputs.ready != 'true'
+        run: echo "::notice::${{ matrix.secret_name }} not set - skipping ${{ matrix.cloud }} drift plan. See infra/README.md."
+
+      # --- live path: only runs once the cloud is configured ----------------
+      # Add your pinned OIDC auth step here first, e.g.
+      #   - uses: aws-actions/configure-aws-credentials@<sha> # pin it
+      #     with: { role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}, aws-region: eu-west-1 }
+      # then init against the real backend and plan. -detailed-exitcode returns 2
+      # when live state has drifted from the code, which fails the job - the
+      # signal you want to see on a Monday morning.
+      - name: Terraform plan (drift)
+        if: steps.gate.outputs.ready == 'true'
+        working-directory: infra/${{ matrix.cloud }}
+        run: |
+          terraform init -input=false
+          terraform plan -detailed-exitcode -lock=false -input=false

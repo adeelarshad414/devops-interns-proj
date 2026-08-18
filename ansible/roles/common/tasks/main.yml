@@ -37,7 +37,7 @@
   loop: "{{ tuned_sysctl | dict2items }}"
 
 - name: Raise the open file limit for the service user
-  ansible.builtin.pam_limits:
+  community.general.pam_limits:
     domain: "{{ daig_service_user }}"
     limit_type: "-"
     limit_item: nofile

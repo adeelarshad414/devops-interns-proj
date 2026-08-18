@@ -13,6 +13,11 @@ const {
   ATTR_SERVICE_VERSION
 } = require('@opentelemetry/semantic-conventions');
 
+// One SDK per process, held so the server's shutdown sequence can flush it in
+// order (after the HTTP server has drained), instead of a second SIGTERM
+// handler racing the drain and calling process.exit() out from under it.
+let sdkRef = null;
+
 function startTelemetry(serviceName) {
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://otel-collector:4318';
 
@@ -37,15 +42,25 @@ function startTelemetry(serviceName) {
   });
 
   sdk.start();
+  sdkRef = sdk;
   console.log(JSON.stringify({
     level: 'info', msg: 'telemetry started', service: serviceName, endpoint
   }));
-
-  const shutdown = () => sdk.shutdown()
-    .catch(e => console.error('otel shutdown failed', e))
-    .finally(() => process.exit(0));
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
 }
 
-module.exports = { startTelemetry };
+// Flush and stop the SDK. The server's graceful-shutdown sequence calls this
+// AFTER the HTTP server has drained, so the last spans of in-flight requests
+// are exported before the process exits. Never calls process.exit itself -
+// exactly one place owns exit (see _shared/shutdown.js).
+async function stopTelemetry() {
+  if (!sdkRef) return;
+  try {
+    await sdkRef.shutdown();
+  } catch (e) {
+    console.error('otel shutdown failed', e);
+  } finally {
+    sdkRef = null;
+  }
+}
+
+module.exports = { startTelemetry, stopTelemetry };

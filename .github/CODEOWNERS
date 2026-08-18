@@ -1,5 +1,9 @@
 # Every pull request needs a review from an owner of the touched paths.
-# Replace the handles before you push - these are placeholders.
+#
+# This repo currently has a single maintainer, so every path routes to them.
+# When a team owns it, widen these to team handles (e.g. a @your-org/security
+# team on the security-relevant paths below) - the path split is already shaped
+# for that. Team handles require the users to be org members with repo access.
 
 *                       @adeelarshad414
 

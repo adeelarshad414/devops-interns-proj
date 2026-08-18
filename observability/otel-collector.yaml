@@ -56,6 +56,14 @@ exporters:
 service:
   telemetry:
     logs: { level: info }
+    metrics:
+      # The collector's OWN metrics - dropped spans, failed exports, queue depth,
+      # memory_limiter refusals - exposed on the built-in :8888 endpoint. A dead
+      # or saturated collector makes every trace and all RED metrics vanish, so it
+      # must be observable itself. Prometheus scrapes this (see prometheus.yml) and
+      # DaigObservabilityPipelineDown alerts when it stops. `detailed` includes the
+      # per-signal counters the pipeline health check relies on.
+      level: detailed
   pipelines:
     traces:
       receivers: [otlp]

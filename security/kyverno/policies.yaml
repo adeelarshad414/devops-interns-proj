@@ -24,21 +24,47 @@ spec:
   validationFailureAction: Enforce
   background: true
   rules:
-    - name: require-non-root
+    # No conditional anchors here. `=(securityContext)` / `=(runAsNonRoot)` mean
+    # "validate ONLY IF present" - so a pod with no securityContext passed, and a
+    # policy titled require-non-root enforced nothing. These require the fields.
+    - name: require-no-privilege-escalation
       match:
         any:
           - resources:
               kinds: [Pod]
               namespaces: [daig]
       validate:
-        message: "Containers must run as non-root. Set runAsNonRoot: true."
+        message: "Every container must set securityContext.allowPrivilegeEscalation: false."
         pattern:
           spec:
-            =(securityContext):
-              =(runAsNonRoot): "true"
             containers:
-              - =(securityContext):
-                  =(allowPrivilegeEscalation): "false"
+              - securityContext:
+                  allowPrivilegeEscalation: "false"
+
+    - name: require-non-root
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [daig]
+      # postgres and web are the documented exceptions: the stock postgres/nginx
+      # images start as root (see k8s/base/namespace.yaml). This mirrors the PSA
+      # stance there - enforce non-root everywhere it is achievable today, and
+      # tighten to include the data/presentation tiers once they run rootless.
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels: { app: postgres }
+          - resources:
+              selector:
+                matchLabels: { app: web }
+      validate:
+        message: "Pods must run as non-root. Set spec.securityContext.runAsNonRoot: true."
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: "true"
 
     - name: require-resource-limits
       match:
@@ -75,6 +101,15 @@ spec:
           - resources:
               kinds: [Pod]
               namespaces: [daig]
+      # Run-to-completion pods (the hpa-scaler CronJobs) never serve traffic, so
+      # a readinessProbe is meaningless for them - excluding them is correct, not
+      # a loophole. Long-running Deployments/StatefulSets are still required to
+      # have one.
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels: { app: hpa-scaler }
       validate:
         message: "Every container needs a readinessProbe."
         pattern:

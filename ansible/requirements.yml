@@ -1,0 +1,12 @@
+---
+# Galaxy collections the roles depend on, pinned so
+#   ansible-galaxy collection install -r ansible/requirements.yml
+# gives a reproducible control node instead of "whatever latest is today".
+# CI installs this before linting; do the same locally before a run.
+collections:
+  - name: community.postgresql   # postgresql_db / _user / _privs in roles/postgres
+    version: ">=3.4.0,<4.0.0"
+  - name: ansible.posix          # ansible.posix.sysctl in roles/common
+    version: ">=1.5.0,<3.0.0"
+  - name: community.general      # community.general.pam_limits in roles/common
+    version: ">=8.0.0,<12.0.0"

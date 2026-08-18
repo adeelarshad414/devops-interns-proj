@@ -25,10 +25,18 @@ scrape_configs:
       - targets: ['dispatch:3003']
         labels: { service: dispatch, tier: application }
 
-  # RED metrics derived from spans by the collector's spanmetrics connector.
+  # RED metrics derived from spans by the collector's spanmetrics connector
+  # (the exporter endpoint, :8889 - NOT the collector's own health metrics).
   - job_name: otel-spanmetrics
     static_configs:
       - targets: ['otel-collector:8889']
+
+  # The collector's OWN health metrics (:8888) - dropped spans, export failures,
+  # queue depth. Without this a dead collector silently takes traces and RED
+  # metrics with it. Feeds the DaigObservabilityPipelineDown `up == 0` alert.
+  - job_name: otel-collector
+    static_configs:
+      - targets: ['otel-collector:8888']
 
   - job_name: prometheus
     static_configs:

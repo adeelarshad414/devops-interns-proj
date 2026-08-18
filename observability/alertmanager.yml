@@ -17,6 +17,13 @@ route:
   group_interval: 5m
   repeat_interval: 4h
   routes:
+    # Dead-man's-switch first. The Watchdog fires continuously; forward it out at
+    # a steady cadence so an EXTERNAL monitor can page when the beat stops.
+    - matchers: ['alertname="Watchdog"']
+      receiver: watchdog
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 1m
     - matchers: ['severity="critical"']
       receiver: pager
       group_wait: 10s
@@ -26,6 +33,15 @@ route:
 
 receivers:
   - name: default
+
+  # DEAD-MAN'S-SWITCH sink. The Watchdog alert POSTs here forever; point it at an
+  # external heartbeat monitor that alerts when the POSTs STOP. That external
+  # signal is the only thing that catches Prometheus/Alertmanager being down -
+  # an internal alert cannot fire if the thing that fires alerts is dead.
+  - name: watchdog
+    # webhook_configs:
+    #   - url: https://hc-ping.com/<uuid>   # healthchecks.io / Dead Man's Snitch
+    #     send_resolved: false
 
   # PAGE: fill in a PagerDuty/Opsgenie integration for real paging.
   - name: pager

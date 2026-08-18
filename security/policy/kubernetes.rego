@@ -10,13 +10,24 @@ package main
 
 import rego.v1
 
-is_workload if {
+# Pod spec regardless of workload kind. CronJob nests the pod one level deeper
+# (spec.jobTemplate.spec.template.spec); everything else uses spec.template.spec.
+pod_spec := input.spec.template.spec if {
 	input.kind in {"Deployment", "StatefulSet", "DaemonSet", "Job"}
 }
 
+pod_spec := input.spec.jobTemplate.spec.template.spec if {
+	input.kind == "CronJob"
+}
+
+# Security rules check MAIN and INIT containers alike - a privileged
+# initContainer is still privileged, and used to slip through unchecked.
 containers contains c if {
-	is_workload
-	some c in input.spec.template.spec.containers
+	some c in pod_spec.containers
+}
+
+containers contains c if {
+	some c in pod_spec.initContainers
 }
 
 # --- deny: privilege escalation --------------------------------------------
@@ -47,8 +58,11 @@ deny contains msg if {
 }
 
 # --- deny: missing probes -------------------------------------------------
+# Only long-running, traffic-serving workloads need a readinessProbe. Init
+# containers and run-to-completion pods (Job/CronJob) legitimately have none.
 deny contains msg if {
-	some c in containers
+	input.kind in {"Deployment", "StatefulSet", "DaemonSet"}
+	some c in input.spec.template.spec.containers
 	not c.readinessProbe
 	msg := sprintf("container '%s' has no readinessProbe. Kubernetes will send traffic to a pod that is not ready.", [c.name])
 }
