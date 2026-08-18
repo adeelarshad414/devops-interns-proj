@@ -1,0 +1,38 @@
+id: _selftest
+title: "Engine self-test (all checks pass on a clean repo)"
+points: 60
+intro: |
+  Not a learner challenge - this exercises every check type against known-true
+  repo state so CI can verify the grader engine itself, deterministically and
+  offline. If this ever fails, the engine or the repo layout changed.
+checks:
+  - name: README exists
+    type: file
+    path: README.md
+    exists: true
+
+  - name: .gitignore ignores .env
+    type: file
+    path: .gitignore
+    contains: ".env"
+
+  - name: web is hardened non-root (regex over the manifest)
+    type: file
+    path: k8s/base/web.yaml
+    contains: "runAsNonRoot:\\s*true"
+    regex: true
+
+  - name: a bogus path is correctly absent
+    type: file
+    path: this/should/not/exist.txt
+    absent: true
+
+  - name: python is runnable
+    type: shell
+    cmd: "python3 -c 'print(2+2)'"
+    expect_stdout_contains: "4"
+
+  - name: the Makefile is present (shell exit code)
+    type: shell
+    cmd: "test -f Makefile"
+    expect_exit: 0

@@ -1,0 +1,26 @@
+id: fix-dispatch-latency
+title: "Restore dispatch latency (Day 4 - the N+1)"
+scenario: docs/DAY4.md
+points: 30
+intro: |
+  We injected CHAOS_SLOW_DISPATCH into the running stack. Dispatch p95 has blown
+  past the 1s SLO because finding a rider became an N+1 query. Diagnose it from the
+  trace, fix it, and get p95 back under SLO. Grade with `make grade C=fix-dispatch-latency`
+  once the observability stack is up (`make obs`).
+checks:
+  - name: dispatch p95 is under the 1s SLO
+    type: prometheus
+    query: 'histogram_quantile(0.95, sum by (le) (rate(duration_milliseconds_bucket{service_name="dispatch"}[5m])))/1000'
+    assert: { op: "<", value: 1.0 }
+    hint: "Open the assign trace in Tempo; count the sequential per-rider count queries. The fast path is one grouped query."
+
+  - name: the chaos flag is no longer set on the running container
+    type: shell
+    cmd: "! docker compose exec -T dispatch printenv CHAOS_SLOW_DISPATCH 2>/dev/null | grep -qi true"
+    hint: "Unset CHAOS_SLOW_DISPATCH (or fix the query and add the index the fast path expects)."
+
+  - name: dispatch still serves assignments (not just fast because it's broken)
+    type: http
+    url: "http://localhost:8080/api/dispatch/riders"
+    expect_status: 200
+    hint: "Latency under SLO only counts if dispatch is actually working - the endpoint must still answer."

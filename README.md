@@ -74,6 +74,10 @@ report findings**:
 > observability signals during an incident, proposes ranked root-cause hypotheses, and
 > ships an eval harness that grades how often it's right (`make copilot` / `make copilot-eval`).
 
+> 🥊 **Break/fix arena:** [challenges](challenges/) inject a fault into the running
+> stack; you fix it; the [auto-grader](grader/) probes the live system and scores your
+> fix, per check, with a hint on every miss (`make challenges` / `make grade C=...`).
+
 > 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
 > canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
 > each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),

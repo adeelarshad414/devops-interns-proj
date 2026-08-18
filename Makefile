@@ -115,6 +115,16 @@ broken: ## Build the kickoff exercise image (exits 78)
 	docker build --target broken -f services/orders/Dockerfile -t tkxel/daig-orders:broken .
 	@echo "now run: docker run --rm tkxel/daig-orders:broken"
 
+# ---------------------------------------------------------------- challenges
+challenges: ## List the break/fix challenges
+	python3 grader/grader.py --list challenges
+
+grade: ## Grade one challenge against the running stack: make grade C=fix-dispatch-latency
+	python3 grader/grader.py challenges/$(C).yml
+
+grade-selftest: ## Grade the engine self-test (offline, no stack needed)
+	python3 grader/grader.py challenges/_selftest.yml
+
 # ---------------------------------------------------------------- ai / aiops
 copilot: ## AI SRE incident copilot demo on a recorded incident (uses Claude if ANTHROPIC_API_KEY is set, else the offline baseline)
 	python3 ai/incident-copilot/copilot.py --fixture ai/incident-copilot/evals/fixtures/latency-n1.json
@@ -149,4 +159,4 @@ hooks: ## Install the pre-commit hook
 .PHONY: help up down nuke logs ps seed smoke psql obs load load-spike \
         vault-up vault-app vault-demo vault-ui vault-seal \
         sonar sec-up scan scan-sast dast egress-up egress-test insecure-on insecure-off \
-        broken copilot copilot-eval check test fmt-check hooks
+        broken copilot copilot-eval challenges grade grade-selftest check test fmt-check hooks

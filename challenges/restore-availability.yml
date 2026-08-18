@@ -1,0 +1,27 @@
+id: restore-availability
+title: "Stop the bleeding (Day 3 - restore orders availability)"
+scenario: docs/DAY3.md
+points: 25
+intro: |
+  Orders are failing and the error budget is burning. Something in the running
+  stack is broken - a crash-loop, a bad dependency, a partition. Find it, fix it,
+  and get the order path healthy again. Grade with `make grade C=restore-availability`.
+checks:
+  - name: every tier is being scraped (nothing is down)
+    type: prometheus
+    query: 'min(up{job="daig-services"})'
+    assert: { op: "==", value: 1 }
+    hint: "A service at up=0 is crash-looping or unschedulable. Check its last logs and exit code."
+
+  - name: a real order completes end to end
+    type: http
+    url: "http://localhost:8080/healthz"
+    expect_status: 200
+    expect_contains: '"ok":true'
+    hint: "The web gateway must answer before the order path can. Bring the stack back with `make up`."
+
+  - name: 5-minute order availability is back above the 99% floor
+    type: prometheus
+    query: 'daig:order_availability:ratio5m'
+    assert: { op: ">", value: 0.99 }
+    hint: "Availability is a lagging signal - give it a couple of minutes after the fix before grading."
