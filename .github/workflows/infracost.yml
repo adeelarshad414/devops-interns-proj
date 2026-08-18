@@ -1,0 +1,117 @@
+name: Infracost
+
+# Cost diff on every Terraform PR. Infracost estimates the monthly cost of the
+# HCL directly (no cloud credentials, no plan needed) and comments the delta vs
+# the base branch on the PR, plus a hard guardrail that fails the build if a change
+# raises estimated spend beyond a threshold - "make cost a CI signal", the FinOps
+# lesson in docs/COST.md turned into a gate.
+#
+# Gated on the INFRACOST_API_KEY secret (a free key from infracost.io). Absent it
+# skips cleanly, the same skip-when-absent pattern as the SonarQube gate. The CLI
+# is installed from a pinned release tarball rather than a marketplace action, to
+# keep the supply chain as tight as the rest of this repo's workflows.
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['infra/**']
+
+permissions:
+  contents: read
+  pull-requests: write   # to post the cost comment
+
+env:
+  INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+  INFRACOST_VERSION: "0.10.39"
+  # Fail the PR if estimated monthly cost rises by more than this (USD).
+  MONTHLY_DELTA_LIMIT: "500"
+
+concurrency:
+  group: infracost-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cost:
+    name: Cost diff and guardrail
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # secrets context isn't allowed in `if`; gate on the env-mapped value.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - name: Skip when unconfigured
+        if: env.INFRACOST_API_KEY == ''
+        run: echo "::notice::INFRACOST_API_KEY not set - skipping cost estimation. Add a free key from infracost.io to activate."
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: env.INFRACOST_API_KEY != ''
+        with:
+          fetch-depth: 0   # need the base branch for the diff
+
+      - name: Install pinned Infracost CLI
+        if: env.INFRACOST_API_KEY != ''
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/infracost/infracost/releases/download/v${INFRACOST_VERSION}/infracost-linux-amd64.tar.gz" \
+            | tar -xz -C /tmp
+          sudo mv /tmp/infracost-linux-amd64 /usr/local/bin/infracost
+          infracost --version
+
+      # Baseline = the PR's target branch. Generate a cost snapshot of it, then
+      # diff the PR head against it, per cloud.
+      - name: Cost breakdown of the base branch
+        if: env.INFRACOST_API_KEY != ''
+        run: |
+          set -euo pipefail
+          git worktree add /tmp/base "origin/${{ github.event.pull_request.base.ref }}"
+          for cloud in aws gcp azure; do
+            infracost breakdown --path "/tmp/base/infra/$cloud" \
+              --format json --out-file "/tmp/base-$cloud.json" || echo "{}" > "/tmp/base-$cloud.json"
+          done
+
+      - name: Cost diff against the base branch
+        if: env.INFRACOST_API_KEY != ''
+        run: |
+          set -euo pipefail
+          echo "## 💸 Infracost — estimated monthly cost diff" >> "$GITHUB_STEP_SUMMARY"
+          worst=0
+          for cloud in aws gcp azure; do
+            infracost diff --path "infra/$cloud" --compare-to "/tmp/base-$cloud.json" \
+              --format json --out-file "/tmp/diff-$cloud.json"
+            delta=$(infracost output --path "/tmp/diff-$cloud.json" --format json \
+              | python3 -c "import json,sys;print(json.load(sys.stdin).get('diffTotalMonthlyCost') or 0)")
+            printf '\n### %s: %+.2f USD/mo\n' "$cloud" "$delta" >> "$GITHUB_STEP_SUMMARY"
+            infracost output --path "/tmp/diff-$cloud.json" --format table >> "$GITHUB_STEP_SUMMARY" || true
+            # Track the largest single-cloud increase for the guardrail.
+            python3 -c "import sys;sys.exit(0 if float('$delta') <= float('$worst') else 1)" || worst="$delta"
+          done
+          echo "WORST_DELTA=$worst" >> "$GITHUB_ENV"
+
+      - name: Comment the diff on the PR
+        if: env.INFRACOST_API_KEY != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Merge the per-cloud diffs and post one PR comment (updated in place).
+          infracost comment github \
+            --path "/tmp/diff-*.json" \
+            --repo "${{ github.repository }}" \
+            --pull-request "${{ github.event.pull_request.number }}" \
+            --github-token "$GITHUB_TOKEN" \
+            --behavior update || echo "::warning::infracost comment failed (non-fatal)"
+
+      - name: Cost guardrail
+        if: env.INFRACOST_API_KEY != ''
+        run: |
+          set -euo pipefail
+          echo "Largest single-cloud monthly increase: ${WORST_DELTA:-0} USD (limit ${MONTHLY_DELTA_LIMIT})"
+          python3 - <<'PY'
+          import os, sys
+          worst = float(os.environ.get("WORST_DELTA", "0") or 0)
+          limit = float(os.environ["MONTHLY_DELTA_LIMIT"])
+          if worst > limit:
+              print(f"::error::Estimated monthly cost rises by ${worst:.2f}/mo (limit ${limit:.0f}). "
+                    "Justify the increase or split the change.")
+              sys.exit(1)
+          print("Within the cost guardrail.")
+          PY
