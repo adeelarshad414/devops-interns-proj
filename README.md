@@ -70,6 +70,10 @@ report findings**:
 > plus flow diagrams for CI/CD, Kubernetes, IaC, observability, Docker and traffic — in
 > [`TRAINING.md`](TRAINING.md#-the-whole-system-in-diagrams).
 
+> 🤖 **AIOps POC:** an [AI SRE Incident Copilot](ai/incident-copilot/) reads the live
+> observability signals during an incident, proposes ranked root-cause hypotheses, and
+> ships an eval harness that grades how often it's right (`make copilot` / `make copilot-eval`).
+
 > 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
 > canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
 > each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),

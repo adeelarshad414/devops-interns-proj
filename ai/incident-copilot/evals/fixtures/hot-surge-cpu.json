@@ -1,0 +1,27 @@
+{
+  "ground_truth": "kitchen-surge-cpu-loop",
+  "note": "CHAOS_HOT_SURGE_LOOP=true: kitchen CPU saturates from an O(n^2) surge-pricing loop; latency rises but DB is fine.",
+  "evidence": {
+    "window": "last 5m",
+    "slo": {"availability_target": 0.999, "latency_p95_target_s": 1.0},
+    "metrics": {
+      "orders_availability_ratio5m": 0.9989,
+      "orders_error_ratio5m": 0.0011,
+      "orders_p95_latency_s": 1.3,
+      "dispatch_p95_latency_s": 0.35,
+      "kitchen_cpu_cores": 0.98,
+      "dispatch_cpu_cores": 0.2,
+      "burn_rate_1h": 1.1,
+      "up": {"orders": 1, "kitchen": 1, "dispatch": 1, "postgres": 1},
+      "restarts_5m": {"orders": 0, "kitchen": 0, "dispatch": 0}
+    },
+    "logs": [
+      {"service": "kitchen", "level": "info", "msg": "kitchen decision", "count": 190}
+    ],
+    "traces": [
+      {"name": "POST /api/kitchen/accept", "p95_ms": 1300, "db_spans": 3,
+       "note": "time dominated by in-process CPU, not DB; few DB spans"}
+    ],
+    "recent_deploys": []
+  }
+}
