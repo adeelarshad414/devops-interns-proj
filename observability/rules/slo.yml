@@ -60,6 +60,7 @@ groups:
         annotations:
           summary: "Order p95 latency is {{ $value }}s, SLO is 1s"
           description: "Check the trace before you check the code. Dispatch is the usual culprit."
+          runbook: "docs/DAY4.md"
 
       # Multi-window, multi-burn-rate (Google SRE workbook). The SLO is 99.9%,
       # so the error budget is 0.1% (0.001). Burn rate = error_ratio / 0.001.
@@ -82,6 +83,7 @@ groups:
         annotations:
           summary: "Slow burn: >6× error budget (6h & 30m)."
           description: "Page. Not a spike — a steady bleed that will exhaust the budget this week."
+          runbook: "docs/DAY4.md#orders-failing"
 
       - alert: DaigErrorBudgetTicketBurn
         expr: daig:order_error:ratio24h > 0.003 and daig:order_error:ratio2h > 0.003
@@ -89,6 +91,7 @@ groups:
         labels: { severity: warning, tier: application }
         annotations:
           summary: "Elevated burn: >3× error budget (24h & 2h). Investigate before it accelerates."
+          runbook: "docs/DAY4.md"
 
       # Retained as a change-freeze signal, not a pager: it's a lagging total
       # (needs 31d retention, now configured). The burn-rate alerts above are
@@ -100,6 +103,7 @@ groups:
         annotations:
           summary: "75% of the 30-day error budget is spent"
           description: "Consider a change freeze. See the error budget policy."
+          runbook: "docs/DAY4.md"
 
       - alert: DaigServiceDown
         expr: up{job="daig-services"} == 0

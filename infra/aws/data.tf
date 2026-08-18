@@ -61,6 +61,15 @@ resource "aws_db_instance" "main" {
 
   db_name  = var.db_name
   username = var.db_username
+  # TRADE-OFF, worth understanding. This password lands in Terraform state in
+  # cleartext. The stronger option is `manage_master_user_password = true`, which
+  # hands password generation+rotation to RDS and keeps it out of state entirely.
+  # We don't use it here because this module COMPOSES the full DATABASE_URL string
+  # (see the secret above) for the app to read - and with RDS-managed passwords
+  # Terraform never sees the plaintext, so it cannot build that URL. Adopting it
+  # is a real improvement but requires reworking the app to read structured creds
+  # (username/password/host) from the RDS-managed secret instead of a ready-made
+  # URL. Left as a deliberate, documented exercise rather than a half-done change.
   password = random_password.db.result
 
   db_subnet_group_name   = aws_db_subnet_group.main.name

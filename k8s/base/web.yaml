@@ -16,6 +16,7 @@ spec:
         tier: presentation
     spec:
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -23,6 +24,9 @@ spec:
           labelSelector:
             matchLabels: { app: web }
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 101          # the 'nginx' user in nginxinc/nginx-unprivileged
+        fsGroup: 101            # so the emptyDir /tmp and cache are writable by nginx
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -50,6 +54,20 @@ spec:
             limits:   { cpu: 200m, memory: 128Mi }
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          volumeMounts:
+            # nginx-unprivileged writes its pid and temp files under /tmp and its
+            # caches under /var/cache/nginx; writable emptyDirs let the root
+            # filesystem stay read-only.
+            - { name: tmp, mountPath: /tmp }
+            - { name: nginx-cache, mountPath: /var/cache/nginx }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+        - { name: nginx-cache, emptyDir: {} }
 ---
 apiVersion: v1
 kind: Service

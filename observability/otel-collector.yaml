@@ -39,6 +39,11 @@ connectors:
       - name: http.route
       - name: http.method
       - name: http.status_code
+    # Attach a trace_id to the RED metrics so a spike in the latency panel links
+    # straight to an exemplar trace. Without this the metric->trace pivot wired in
+    # grafana/provisioning/datasources.yaml has nothing to jump to.
+    exemplars:
+      enabled: true
     metrics_flush_interval: 15s
 
 exporters:

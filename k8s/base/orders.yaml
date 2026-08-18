@@ -32,6 +32,10 @@ spec:
     spec:
       # This pod makes no Kubernetes API calls; don't hand it a token.
       automountServiceAccountToken: false
+      # Graceful shutdown: preStop delays SIGTERM so endpoints deregister first,
+      # then the app drains (server -> pool -> telemetry, see _shared/shutdown.js).
+      # 30s comfortably covers the preStop sleep plus the drain.
+      terminationGracePeriodSeconds: 30
       # Spread replicas across nodes so a single node drain can't breach the PDB.
       topologySpreadConstraints:
         - maxSkew: 1
@@ -96,6 +100,11 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
+          lifecycle:
+            preStop:
+              # Endpoints are removed asynchronously; sleep so in-flight traffic
+              # drains before the app receives SIGTERM.
+              exec: { command: ["sleep", "5"] }
           volumeMounts:
             - name: tmp
               mountPath: /tmp

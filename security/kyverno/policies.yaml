@@ -47,18 +47,15 @@ spec:
           - resources:
               kinds: [Pod]
               namespaces: [daig]
-      # postgres and web are the documented exceptions: the stock postgres/nginx
-      # images start as root (see k8s/base/namespace.yaml). This mirrors the PSA
-      # stance there - enforce non-root everywhere it is achievable today, and
-      # tighten to include the data/presentation tiers once they run rootless.
+      # postgres is the one documented exception: the stock postgres image starts
+      # as root (see k8s/base/namespace.yaml). web used to be excluded too, but it
+      # now runs on nginx-unprivileged (uid 101), so it is held to the rule like
+      # every app pod - enforce non-root everywhere it is achievable today.
       exclude:
         any:
           - resources:
               selector:
                 matchLabels: { app: postgres }
-          - resources:
-              selector:
-                matchLabels: { app: web }
       validate:
         message: "Pods must run as non-root. Set spec.securityContext.runAsNonRoot: true."
         pattern:

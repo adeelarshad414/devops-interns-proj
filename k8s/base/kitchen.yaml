@@ -29,6 +29,9 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       automountServiceAccountToken: false
+      # Graceful shutdown: preStop delays SIGTERM so endpoints deregister first,
+      # then the app drains (server -> pool -> telemetry, see _shared/shutdown.js).
+      terminationGracePeriodSeconds: 30
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -92,6 +95,9 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
           volumeMounts:
             - name: tmp
               mountPath: /tmp
