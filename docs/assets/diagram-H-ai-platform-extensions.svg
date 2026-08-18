@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 660" width="1060" height="660">
+<marker id="a22D3EE" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#22D3EE"/></marker>
+<marker id="a34D399" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#34D399"/></marker>
+<marker id="aA78BFA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#A78BFA"/></marker>
+<marker id="aFBBF24" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#FBBF24"/></marker>
+<rect width="1060" height="660" fill="#0A1120"/>
+<text x="40" y="52" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="30" font-weight="700" fill="#E2E8F0" text-anchor="start">AI &amp; platform extensions</text>
+<text x="40" y="80" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="15" font-weight="400" fill="#94A3B8" text-anchor="start">Four capabilities layered on the daig stack — each ships with an eval or gate wired into CI.</text>
+<rect x="390" y="250" width="280" height="168" rx="18" fill="#0C1830" stroke="#26364f" stroke-width="2"/>
+<text x="530.0" y="280" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="17" font-weight="700" fill="#E2E8F0" text-anchor="middle">the daig stack</text>
+<text x="530.0" y="308" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="400" fill="#94A3B8" text-anchor="middle">web · orders · kitchen · dispatch</text>
+<text x="530.0" y="335" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="400" fill="#94A3B8" text-anchor="middle">postgres · redis</text>
+<text x="530.0" y="362" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="400" fill="#94A3B8" text-anchor="middle">OTel → Prom · Loki · Tempo · Grafana</text>
+<text x="530.0" y="389" font-family="ui-monospace,Menlo,monospace" font-size="12.5" font-weight="400" fill="#94A3B8" text-anchor="middle">IaC: AWS · GCP · Azure   |   CI: 7 gates</text>
+<rect x="40" y="108" width="300" height="150" rx="14" fill="#16233c" stroke="#22D3EE" stroke-width="2"/>
+<rect x="40" y="108" width="6" height="150" rx="3" fill="#22D3EE" stroke="#22D3EE" stroke-width="0"/>
+<circle cx="66" cy="135" r="7" fill="#22D3EE"/>
+<text x="82" y="142" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="19" font-weight="600" fill="#E2E8F0" text-anchor="start">AI Incident Copilot</text>
+<text x="322" y="141" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="12" font-weight="700" fill="#22D3EE" text-anchor="end">AIOps</text>
+<text x="62" y="170" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">reads live Prometheus/Loki/Tempo,</text>
+<text x="62" y="193" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">ranks root-cause hypotheses,</text>
+<text x="62" y="216" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">graded by an eval harness (acc@1/@3)</text>
+<rect x="720" y="108" width="300" height="150" rx="14" fill="#16233c" stroke="#34D399" stroke-width="2"/>
+<rect x="720" y="108" width="6" height="150" rx="3" fill="#34D399" stroke="#34D399" stroke-width="0"/>
+<circle cx="746" cy="135" r="7" fill="#34D399"/>
+<text x="762" y="142" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="19" font-weight="600" fill="#E2E8F0" text-anchor="start">Auto-grader arena</text>
+<text x="1002" y="141" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="12" font-weight="700" fill="#34D399" text-anchor="end">interactive</text>
+<text x="742" y="170" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">a challenge injects a fault; you fix it;</text>
+<text x="742" y="193" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">the grader probes live state and scores it,</text>
+<text x="742" y="216" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">per check, with a hint on every miss</text>
+<rect x="40" y="410" width="300" height="150" rx="14" fill="#16233c" stroke="#A78BFA" stroke-width="2"/>
+<rect x="40" y="410" width="6" height="150" rx="3" fill="#A78BFA" stroke="#A78BFA" stroke-width="0"/>
+<circle cx="66" cy="437" r="7" fill="#A78BFA"/>
+<text x="82" y="444" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="19" font-weight="600" fill="#E2E8F0" text-anchor="start">LLMOps + AI-security</text>
+<text x="322" y="443" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="12" font-weight="700" fill="#A78BFA" text-anchor="end">OWASP-LLM</text>
+<text x="62" y="472" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">a support agent, vulnerable vs hardened;</text>
+<text x="62" y="495" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">a red-team eval gate (100%→0% exploit)</text>
+<text x="62" y="518" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">+ a per-call token-cost SLO</text>
+<rect x="720" y="410" width="300" height="150" rx="14" fill="#16233c" stroke="#FBBF24" stroke-width="2"/>
+<rect x="720" y="410" width="6" height="150" rx="3" fill="#FBBF24" stroke="#FBBF24" stroke-width="0"/>
+<circle cx="746" cy="437" r="7" fill="#FBBF24"/>
+<text x="762" y="444" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="19" font-weight="600" fill="#E2E8F0" text-anchor="start">Infracost PR bot</text>
+<text x="1002" y="443" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="12" font-weight="700" fill="#FBBF24" text-anchor="end">FinOps</text>
+<text x="742" y="472" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">every infra/** PR gets a cost diff</text>
+<text x="742" y="495" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">commented on it, plus a guardrail that</text>
+<text x="742" y="518" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13.5" font-weight="400" fill="#94A3B8" text-anchor="start">fails the build past a $ threshold</text>
+<line x1="340" y1="183" x2="430" y2="254" stroke="#22D3EE" stroke-width="2.2" marker-end="url(#a22D3EE)"/>
+<text x="352" y="205" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="11.5" font-weight="400" fill="#22D3EE" text-anchor="start">reads telemetry</text>
+<line x1="720" y1="183" x2="630" y2="254" stroke="#34D399" stroke-width="2.2" marker-end="url(#a34D399)"/>
+<text x="700" y="205" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="11.5" font-weight="700" fill="#34D399" text-anchor="end">probes live stack</text>
+<line x1="340" y1="485" x2="430" y2="414" stroke="#A78BFA" stroke-width="2.2" marker-end="url(#aA78BFA)"/>
+<text x="352" y="470" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="11.5" font-weight="400" fill="#A78BFA" text-anchor="start">guards CI</text>
+<line x1="720" y1="485" x2="630" y2="414" stroke="#FBBF24" stroke-width="2.2" marker-end="url(#aFBBF24)"/>
+<text x="700" y="470" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="11.5" font-weight="700" fill="#FBBF24" text-anchor="end">gates infra PRs</text>
+<rect x="40" y="600" width="980" height="40" rx="12" fill="#0C1830" stroke="#26364f" stroke-width="1.5"/>
+<text x="60" y="625" font-family="Inter,Segoe UI,system-ui,sans-serif" font-size="13" font-weight="400" fill="#E2E8F0" text-anchor="start">Common thread:  every extension is offline-testable, secret-gated where a cloud/LLM key is needed, and enforced as an eval or gate in CI — the platform is measured, not just read.</text>
+</svg>

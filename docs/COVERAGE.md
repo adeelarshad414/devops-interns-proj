@@ -137,3 +137,21 @@ skill.
 Say it in the kickoff. It sets an expectation you can actually meet, and it
 means that on Friday they measure themselves against the real target rather
 than against a promise nobody made honestly.
+
+---
+
+## Beyond the core — platform extensions
+
+The five-day scope above is the *curriculum*. The repo also ships four capabilities
+that sit **on top** of it — depth-3, go-further material, none of them on the
+nineteen-skill target list, and each one measured rather than merely demoed:
+
+| Extension | Domain | Where |
+|---|---|---|
+| AI SRE Incident Copilot | AIOps | `ai/incident-copilot/` |
+| Auto-grader / challenge arena | interactive assessment | `grader/`, `challenges/` |
+| LLMOps + AI-security lab | LLMOps · OWASP-LLM | `ai/support-agent/` |
+| Infracost cost gate | FinOps | `.github/workflows/infracost.yml` |
+
+They're where the platform points *past* the core rotation. See
+[TRAINING.md](../TRAINING.md#-ai--platform-extensions).

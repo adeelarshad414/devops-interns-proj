@@ -618,6 +618,13 @@ daig/
 │   ├── day5-demoday.sh           nine scenarios, assigned at random
 │   └── day6-security.sh          find and fix six vulnerabilities
 │
+├── ai/                           ── AI / AIOps ───────────────────────
+│   ├── incident-copilot/         AI SRE copilot: telemetry → ranked RCA, eval-graded
+│   └── support-agent/            LLMOps + AI-security lab (OWASP-LLM, red-teamed)
+├── grader/                       ── THE ARENA ────────────────────────
+│   └── grader.py · checks.py     pluggable check engine (file/shell/http/prometheus)
+├── challenges/                   break/fix challenges graded against live state
+│
 ├── load/iftar-spike.js           zero-dependency load generator
 ├── scripts/                      smoke · seed · integration · init-repo
 │   └── cost-model.py             deterministic cost model, all three clouds
@@ -625,6 +632,7 @@ daig/
 │
 ├── .github/
 │   ├── workflows/                ci · cd · security · quality · devsecops
+│   │                             · challenges · ai-security · infracost · drift
 │   ├── ISSUE_TEMPLATE/
 │   ├── CODEOWNERS · dependabot.yml · pull_request_template.md
 │

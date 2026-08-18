@@ -5,6 +5,36 @@ Versioning is [semantic](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — AI/AIOps, platform extensions, and reference-grade hardening
+
+- **AI SRE Incident Copilot** (`ai/incident-copilot/`) — reads live
+  Prometheus/Loki/Tempo during an incident, proposes ranked root-cause hypotheses,
+  and grades itself against labelled fixtures (accuracy@1/@3, LLM vs a heuristic
+  baseline). Evals-as-a-gate in CI.
+- **Auto-grader / challenge engine** (`grader/`, `challenges/`) — a break/fix arena;
+  challenges probe live state (Prometheus/HTTP/shell/file) and score the fix, per
+  check, with hints. The engine is tested offline on every PR.
+- **LLMOps + AI-security lab** (`ai/support-agent/`) — a support agent built
+  vulnerable vs hardened against the OWASP-LLM Top 10, with a red-team eval gate
+  (100%→0% exploit) and a per-call token-cost SLO.
+- **Infracost PR bot** (`.github/workflows/infracost.yml`) — a monthly-cost diff and
+  guardrail on every `infra/**` PR (FinOps); cost as a CI signal.
+- **Best-practices remediation** — Kyverno non-root now actually enforces; scaler
+  CronJobs pass admission; Swarm boots via `*_FILE` Docker secrets; ordered graceful
+  shutdown across services; dead-man's-switch alert + observability self-monitoring;
+  per-job least-privilege + job timeouts across workflows; Ansible CI + pinned
+  `requirements.yml`; scheduled Terraform drift workflow; real kitchen/dispatch tests.
+- **Rootless web tier** — `nginx-unprivileged`, `readOnlyRootFilesystem`, dropped
+  capabilities; now enforced by the Kyverno non-root policy instead of excluded.
+- **Diagrams** — 7 domain/flow/conceptual diagrams (A–G) plus an AI/platform-
+  extensions map (H).
+
+### Security
+
+- Instructor answer keys moved to the private `devops-interns-proj-solutions` repo;
+  the public repo is now answer-free (git history retains them — a documented,
+  deliberate follow-up).
+
 ### Changed — hardening from the expert audit (`planning/AUDIT-2026-expert-review.md`)
 
 - **Reproducible builds:** committed `package-lock.json` for orders/kitchen/
