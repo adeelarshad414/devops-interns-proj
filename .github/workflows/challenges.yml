@@ -1,0 +1,39 @@
+name: Challenge engine
+
+# The auto-grader is infrastructure the whole platform leans on, so its engine is
+# tested like any other code. This runs offline and deterministically: the engine
+# unit tests plus grading the self-test challenge (every check type against
+# known-true repo state). No live stack, no network - the real break/fix challenges
+# run against `make obs`, not here.
+
+on:
+  push:
+    branches: [main]
+    paths: ['grader/**', 'challenges/**']
+  pull_request:
+    branches: [main]
+    paths: ['grader/**', 'challenges/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: challenges-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    name: Grader engine tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install PyYAML
+        run: python3 -m pip install --quiet --break-system-packages pyyaml
+
+      - name: Engine unit tests (self-test passes, negative path fails, checks fail-safe)
+        run: python3 grader/test_grader.py
+
+      - name: Grade the self-test challenge (exit 0 = engine + checks wired correctly)
+        run: NO_COLOR=1 python3 grader/grader.py challenges/_selftest.yml
