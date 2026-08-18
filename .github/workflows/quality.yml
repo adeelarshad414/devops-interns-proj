@@ -14,6 +14,7 @@ jobs:
   coverage:
     name: Tests with coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         service: [orders, kitchen, dispatch]
@@ -23,7 +24,7 @@ jobs:
         with: { node-version: '22' }
 
       - working-directory: services/${{ matrix.service }}
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund   # reproducible install from the lockfile, like every other workflow
 
       - name: Run tests with coverage
         working-directory: services/${{ matrix.service }}
@@ -45,6 +46,7 @@ jobs:
   sonarqube:
     name: SonarQube quality gate
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: coverage
     # Forks cannot read secrets, so the scan would fail for reasons unrelated
     # to code quality. Skip rather than fail confusingly.
@@ -81,3 +83,31 @@ jobs:
         if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # v1
         timeout-minutes: 5
+
+  # Terraform got validate + tfsec + checkov; the ansible/ tree had no automated
+  # check at all, so it was the code most likely to rot silently. Syntax-check is
+  # a blocking gate; ansible-lint is advisory (like the other deep scanners here).
+  ansible:
+    name: Ansible lint and syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install ansible-core, ansible-lint and the pinned collections
+        run: |
+          set -euo pipefail
+          # --break-system-packages: the runner is ephemeral, so installing into
+          # its system Python is fine and avoids pinning a setup-python action.
+          python3 -m pip install --quiet --break-system-packages ansible-core ansible-lint
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Syntax check (blocking)
+        working-directory: ansible
+        run: ansible-playbook --syntax-check -i inventories/dev/hosts.yml site.yml
+
+      - name: ansible-lint (advisory)
+        working-directory: ansible
+        run: ansible-lint || true

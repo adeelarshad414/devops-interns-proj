@@ -5,13 +5,15 @@
 const express = require('express');
 const { registry, httpMetrics } = require('../../_shared/metrics');
 const { makePool } = require('../../_shared/db');
+const { installGracefulShutdown } = require('../../_shared/shutdown');
+const { pickLeastLoaded } = require('./select');
 const log = require('../../_shared/logger').build('dispatch');
 
 const SERVICE = 'dispatch';
 
 module.exports = function startServer(config) {
   const PORT = Number(process.env.PORT || 3003);
-  const { q } = makePool(SERVICE, config.DATABASE_URL);
+  const { pool, q } = makePool(SERVICE, config.DATABASE_URL);
 
   log.info({ credential_source: config.source }, 'configuration resolved');
 
@@ -55,8 +57,7 @@ module.exports = function startServer(config) {
           WHERE rider_id = $1 AND state = 'ASSIGNED'`, [r.id]);
       scored.push({ ...r, load: c.load });
     }
-    scored.sort((a, b) => a.load - b.load);
-    return scored[0];
+    return pickLeastLoaded(scored);
   }
 
   const app = express();
@@ -105,6 +106,6 @@ module.exports = function startServer(config) {
   });
 
   const server = app.listen(PORT, () => log.info({ port: PORT }, `${SERVICE} listening`));
-  process.on('SIGTERM', () => server.close(() => process.exit(0)));
+  installGracefulShutdown({ server, pool, log });
   return server;
 };

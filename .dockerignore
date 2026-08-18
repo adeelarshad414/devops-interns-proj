@@ -7,6 +7,19 @@
 **/.DS_Store
 **/npm-debug.log*
 
+# Secrets must never enter the build context. Docker reads ONLY this root file,
+# never the per-service .dockerignore files, so these patterns are the sole thing
+# standing between a stray .env and a baked image layer. (.env.example is safe.)
+**/.env
+**/.env.*
+**/*.env
+!**/.env.example
+
+# Tests and coverage are build-time only; keep them out of runtime images.
+**/test
+**/*.test.js
+**/coverage
+
 # Not needed inside images
 planning/
 *.pptx

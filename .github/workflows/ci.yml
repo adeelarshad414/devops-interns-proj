@@ -20,6 +20,7 @@ jobs:
   static:
     name: Static checks
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -77,6 +78,7 @@ jobs:
   test:
     name: Unit tests - ${{ matrix.service }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +103,7 @@ jobs:
   build:
     name: Build image - ${{ matrix.service }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [static, test]
     permissions:
       contents: read
@@ -149,6 +152,7 @@ jobs:
   integration:
     name: Integration - full stack
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [static, test]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

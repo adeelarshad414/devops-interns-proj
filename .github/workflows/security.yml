@@ -19,6 +19,7 @@ jobs:
   secrets:
     name: Secret scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -31,6 +32,7 @@ jobs:
   dependencies:
     name: Dependency vulnerabilities
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         service: [orders, kitchen, dispatch]
@@ -48,6 +50,7 @@ jobs:
   images:
     name: Image and filesystem scan
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -69,6 +72,7 @@ jobs:
   iac:
     name: Terraform static analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         cloud: [aws, gcp, azure]

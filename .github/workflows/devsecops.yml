@@ -26,17 +26,21 @@ on:
     # scan says nothing about today.
     - cron: '0 4 * * *'
 
+# Least privilege: read-only by default, and each job is granted ONLY the extra
+# scope it needs. Previously every job inherited security-events/id-token/packages
+# write, so a compromised action in (say) the secret scanner could mint an OIDC
+# cloud token or push to GHCR. Now only `build` can.
 permissions:
   contents: read
-  security-events: write
-  id-token: write        # OIDC for keyless signing. No long-lived keys.
-  packages: write
 
 jobs:
   # ---------------------------------------------------------------- 1. SECRETS
   secrets:
     name: 1 · Secret scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -66,6 +70,10 @@ jobs:
   sast:
     name: 2 · SAST
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF to the Security tab
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -96,6 +104,11 @@ jobs:
   codeql:
     name: 2b · CodeQL
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write   # upload CodeQL results
+      actions: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: github/codeql-action/init@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
@@ -110,6 +123,9 @@ jobs:
   dependencies:
     name: 3 · Dependency scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -141,6 +157,10 @@ jobs:
   iac:
     name: 4 · IaC and policy as code
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write   # upload Trivy IaC SARIF
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -194,6 +214,11 @@ jobs:
   build:
     name: 5 · Build, scan, SBOM, sign
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write     # push images to GHCR
+      id-token: write     # OIDC for keyless cosign signing
     needs: [secrets, sast, dependencies]
     strategy:
       fail-fast: false
@@ -282,6 +307,9 @@ jobs:
   dast:
     name: 6 · DAST against a running stack
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
     needs: [build]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -314,6 +342,9 @@ jobs:
   gate:
     name: Security gate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
     needs: [secrets, sast, codeql, dependencies, iac, build, dast]
     if: always()
     steps:

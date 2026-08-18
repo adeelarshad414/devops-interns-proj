@@ -107,3 +107,27 @@ groups:
         labels: { severity: critical }
         annotations:
           summary: "{{ $labels.service }} is not being scraped"
+          runbook: "observability/README.md#a-service-stopped-being-scraped"
+
+      # The observability stack must watch ITSELF. A dead collector takes every
+      # trace and all span-derived RED metrics with it, silently; a dead
+      # Prometheus blinds everything. `up == 0` on any pipeline component pages.
+      - alert: DaigObservabilityPipelineDown
+        expr: up{job=~"otel-collector|otel-spanmetrics|prometheus"} == 0
+        for: 2m
+        labels: { severity: critical, tier: observability }
+        annotations:
+          summary: "Observability component {{ $labels.job }} is down"
+          description: "Traces/metrics may be vanishing. Alerting itself could be blind - check the collector and Prometheus first."
+          runbook: "observability/README.md"
+
+      # DEAD-MAN'S-SWITCH. vector(1) is always true, so this alert fires forever.
+      # It is meant to be ROUTED OUT to an external heartbeat monitor (Dead Man's
+      # Snitch, healthchecks.io) that alerts when the beat STOPS. If Prometheus,
+      # the rule evaluator, or Alertmanager dies, every other alert goes silent -
+      # this is the only one whose ABSENCE is the signal. See alertmanager.yml.
+      - alert: Watchdog
+        expr: vector(1)
+        labels: { severity: none }
+        annotations:
+          summary: "Alerting pipeline heartbeat. If this stops reaching the external monitor, alerting is down."

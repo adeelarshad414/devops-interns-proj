@@ -15,6 +15,8 @@
 // short-lived and delivered separately. Compromising one gets you nothing.
 'use strict';
 
+const fs = require('fs');
+
 const EX_CONFIG = 78;
 const DUMMY = 'CHANGE_ME_DEV_ONLY';
 
@@ -27,6 +29,35 @@ function log(level, obj) {
 function die(msg, extra = {}) {
   log('fatal', { msg, exit_code: EX_CONFIG, ...extra });
   process.exit(EX_CONFIG);
+}
+
+// --------------------------------------------------------------------------
+// Docker / Swarm secret convention. A mounted secret arrives as a FILE (e.g.
+// /run/secrets/db_url on a tmpfs), and the container is told where via a
+// companion FOO_FILE variable. Any FOO_FILE we find is read into FOO before
+// anything else looks at the environment, so `DATABASE_URL_FILE=/run/secrets/db_url`
+// behaves exactly like `DATABASE_URL=...`. The plain variable wins if both are set.
+//
+// This is what lets `docker stack deploy` (swarm/daig-stack.yml) work: mounted
+// secret files are a real secret store, unlike loose environment variables.
+// Returns the set of keys that came from files, so the production guard below
+// can allow file-backed secrets while still refusing plain-env credentials.
+// --------------------------------------------------------------------------
+function loadFileBackedEnv() {
+  const loaded = new Set();
+  for (const [key, path] of Object.entries(process.env)) {
+    if (!key.endsWith('_FILE') || !path) continue;
+    const target = key.slice(0, -'_FILE'.length);
+    if (process.env[target]) continue;               // explicit plain value wins
+    try {
+      process.env[target] = fs.readFileSync(path, 'utf8').trim();
+      loaded.add(target);
+      log('info', { msg: 'loaded secret from mounted file', key: target, path });
+    } catch (err) {
+      die(`${key} is set but its file could not be read`, { path, error: err.message });
+    }
+  }
+  return loaded;
 }
 
 // --------------------------------------------------------------------------
@@ -111,6 +142,10 @@ async function readDynamicDbCredential(addr, token, mount, role) {
 // The public entry point. Every service calls this before opening a port.
 // --------------------------------------------------------------------------
 async function bootstrap(serviceName, spec = {}) {
+  // Resolve *_FILE (Docker/Swarm) secrets first, so both the OpenBao path (a
+  // file-delivered BAO_SECRET_ID) and the file path below see plain values.
+  const fileBacked = loadFileBackedEnv();
+
   const addr = process.env.BAO_ADDR || process.env.VAULT_ADDR;
   const roleId = process.env.BAO_ROLE_ID;
   const secretId = process.env.BAO_SECRET_ID;
@@ -165,20 +200,28 @@ async function bootstrap(serviceName, spec = {}) {
     }
   }
 
-  // ---------------- path 2: environment ----------------
-  if (process.env.NODE_ENV === 'production') {
+  // ---------------- path 2: mounted secret files / environment ----------------
+  // Mounted secret files (Docker/Swarm) are a legitimate production store.
+  // Loose environment variables are not - that silent degradation is the leak
+  // we refuse. So production is allowed only when every required key was
+  // file-backed; otherwise we die exactly as before.
+  const requiredFromFiles = required.every((k) => fileBacked.has(k));
+
+  if (process.env.NODE_ENV === 'production' && !requiredFromFiles) {
     die('No secret store configured while NODE_ENV=production', {
-      remedy: 'Set BAO_ADDR, BAO_ROLE_ID and BAO_SECRET_ID. See vault/README.md.'
+      remedy: 'Configure OpenBao (BAO_ADDR/BAO_ROLE_ID/BAO_SECRET_ID), or deliver secrets as *_FILE Docker/Swarm secrets. See vault/README.md.'
     });
   }
 
-  log('warn', {
-    msg: 'no secret store configured - reading credentials from the environment',
-    note: 'acceptable for local development only. See vault/README.md.'
-  });
+  if (process.env.NODE_ENV !== 'production') {
+    log('warn', {
+      msg: 'no secret store configured - reading credentials from the environment',
+      note: 'acceptable for local development only. See vault/README.md.'
+    });
+  }
 
   const config = {
-    source: 'environment',
+    source: requiredFromFiles ? 'docker-secret' : 'environment',
     DATABASE_URL: process.env.DATABASE_URL,
     JWT_SECRET: process.env.JWT_SECRET,
     PAYMENT_API_KEY: process.env.PAYMENT_API_KEY

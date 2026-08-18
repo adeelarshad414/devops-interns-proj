@@ -6,6 +6,7 @@ const express = require('express');
 const { request } = require('undici');
 const { registry, httpMetrics, ordersTotal } = require('../../_shared/metrics');
 const { makePool } = require('../../_shared/db');
+const { installGracefulShutdown } = require('../../_shared/shutdown');
 const log = require('../../_shared/logger').build('orders');
 
 const SERVICE = 'orders';
@@ -169,11 +170,6 @@ module.exports = function startServer(config) {
   }
 
   const server = app.listen(PORT, () => log.info({ port: PORT }, `${SERVICE} listening`));
-
-  process.on('SIGTERM', () => {
-    log.info({}, 'SIGTERM received, draining');
-    server.close(() => pool.end().finally(() => process.exit(0)));
-  });
-
+  installGracefulShutdown({ server, pool, log });
   return server;
 };

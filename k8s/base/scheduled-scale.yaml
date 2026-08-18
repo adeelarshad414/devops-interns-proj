@@ -42,6 +42,10 @@ spec:
     spec:
       backoffLimit: 2
       template:
+        metadata:
+          # Labelled so admission policies can tell these run-to-completion pods
+          # apart from long-running workloads (they have no readinessProbe by design).
+          labels: { app: hpa-scaler }
         spec:
           serviceAccountName: hpa-scaler
           restartPolicy: Never
@@ -52,6 +56,9 @@ spec:
             - name: scale
               image: bitnami/kubectl:1.31
               args: ["patch", "hpa", "orders", "--type=merge", "-p", '{"spec":{"minReplicas":10}}']
+              resources:
+                requests: { cpu: 10m, memory: 32Mi }
+                limits:   { cpu: 100m, memory: 64Mi }
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
@@ -69,6 +76,8 @@ spec:
     spec:
       backoffLimit: 2
       template:
+        metadata:
+          labels: { app: hpa-scaler }
         spec:
           serviceAccountName: hpa-scaler
           restartPolicy: Never
@@ -79,6 +88,9 @@ spec:
             - name: scale
               image: bitnami/kubectl:1.31
               args: ["patch", "hpa", "orders", "--type=merge", "-p", '{"spec":{"minReplicas":3}}']
+              resources:
+                requests: { cpu: 10m, memory: 32Mi }
+                limits:   { cpu: 100m, memory: 64Mi }
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
