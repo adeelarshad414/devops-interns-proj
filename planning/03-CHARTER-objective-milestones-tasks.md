@@ -136,7 +136,7 @@ actually do.
 | **M5** | Evidence over guessing | Every intern has found a latency defect using traces and profiles, with before/after numbers | End of Day 4 |
 | **M6** | Security as a gate | Every intern has triaged scanner output, found the unflagged vulnerability, and written a gate | End of Day 5 |
 | **M7** | Diagnosis under pressure | Every intern has diagnosed a live failure in front of the room | End of Day 6 |
-| **M8** | Programme improved | Retro captured; `docs/INSTRUCTOR.md` and day docs updated for next cohort | T+3 days |
+| **M8** | Programme improved | Retro captured; the private solutions repo and day docs updated for next cohort | T+3 days |
 
 **M8 is the one that gets skipped and the one that compounds.** Last year's deck
 had zero speaker notes, so nothing carried forward and the programme started from
@@ -183,7 +183,7 @@ is a better outcome than one who leaves believing they know Kubernetes.
 ## 5. Tasks
 
 Task IDs are `T<day>.<n>`. Each has one deliverable. Commands are in
-`docs/CHEATSHEET.md`; worked solutions in `docs/SOLUTIONS.md` (instructor-held
+`docs/CHEATSHEET.md`; worked solutions in the private solutions repo (instructor-held
 until the day closes).
 
 ### Pre-flight — T0
@@ -295,9 +295,9 @@ until the day closes).
 | **T7.1** | Exit survey: two areas each intern wants to go deeper on | Instructor | Responses |
 | **T7.2** | Score against targets in §4; record which were missed | Instructor | Scorecard |
 | **T7.3** | Retro: where the room was lost, recurring questions | Instructor | Notes |
-| **T7.4** | Update `docs/INSTRUCTOR.md` and day docs from the retro | Instructor | Committed diff |
+| **T7.4** | Update the private solutions repo and day docs from the retro | Instructor | Committed diff |
 | **T7.5** | Confirm zero orphaned cloud resources; reconcile the bill to `docs/COST.md` | Instructor | Console + invoice |
-| **T7.6** | Release `docs/SOLUTIONS.md` to the interns | Instructor | Shared |
+| **T7.6** | Release the private solutions repo to the interns | Instructor | Shared |
 
 ---
 

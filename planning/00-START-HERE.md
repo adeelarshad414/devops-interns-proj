@@ -13,7 +13,7 @@ Kickoff deck, six-day rotation, demo platform, and the answer key.
 | 3 | `03-CHARTER-objective-milestones-tasks.md` | **you first** | **Objective, 24 checkpoint questions, 8 milestones, 16 targets, 57 tasks** |
 | 4 | `04-COVERAGE-skills-matrix.md` | you | The scope decision. Twenty skills, six days, honest depth per skill |
 | 5 | `05-CHEATSHEET-handout.md` | **interns, Day 1** | Commands and the diagnostic ladder. **No answers — safe to print** |
-| 6 | `06-SOLUTIONS-instructor-only.md` | **you only** | **Step-by-step for every task, chaos variant and checkpoint question** |
+| 6 | the private solutions repo | **you only** | **Step-by-step for every task, chaos variant and checkpoint question** |
 | 7 | `07-DEVSECOPS-guide.md` | you | Seven gates, six vulnerabilities, supply chain, secrets |
 | 8 | `08-DAIG-README.md` | both | The platform README, with architecture and flow diagrams |
 | 9 | `09-ARCHITECTURE.md` | you | Eighteen design decisions and the alternatives rejected |
@@ -35,7 +35,7 @@ I split the cheat sheet in two, deliberately:
 - **`05-CHEATSHEET-handout.md`** — commands, the diagnostic ladder, PromQL/LogQL/
   TraceQL, and a "things that will bite you" table. **Print it for every intern
   on Day 1.** Every exercise still works with it open.
-- **`06-SOLUTIONS-instructor-only.md`** — worked answers to all 57 tasks, all
+- **the private solutions repo** — worked answers to all 57 tasks, all
   three Day 1 chaos variants, all three Day 3 variants, both Day 4 defects, all
   six vulnerabilities, all nine Demo Day scenarios, and all 24 checkpoint
   questions.

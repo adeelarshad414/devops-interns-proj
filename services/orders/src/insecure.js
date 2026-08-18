@@ -10,7 +10,7 @@
 // one so the diff is the lesson. Same idea as OWASP Juice Shop, scoped to Daig.
 //
 // Every vulnerability is tagged with its CWE so that scanner output can be
-// matched back to the source. Answers live in docs/INSTRUCTOR.md.
+// matched back to the source. Answers live in the private solutions repo.
 'use strict';
 
 const crypto = require('node:crypto');

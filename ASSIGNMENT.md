@@ -5,7 +5,7 @@
 **Format:** work the phases **in order** — each builds on the last. Capture the
 evidence each task asks for in a single `submission/` folder (screenshots,
 command output, short notes).
-**Worked answers:** [`SOLUTION.md`](SOLUTION.md) — instructor-held. Try every task
+**Worked answers:** instructor-held in the private [devops-interns-proj-solutions](https://github.com/adeelarshad414/devops-interns-proj-solutions) repo. Try every task
 before looking.
 **Bigger picture:** each phase maps to a track on the
 [DevOps Roadmap](https://roadmap.sh/devops) — finishing this capstone is how you
