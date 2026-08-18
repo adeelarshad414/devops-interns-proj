@@ -1,0 +1,49 @@
+name: AI security red-team
+
+# Runs the OWASP-LLM red-team against the support-agent lab and gates on the result
+# - the AI-era equivalent of this repo's SAST job. Offline and deterministic on
+# every PR (the mock proves the vulnerable->hardened delta is real); the live
+# Claude red-team runs only when ANTHROPIC_API_KEY is configured, and fails the
+# build if the HARDENED prompt config is exploitable above a floor.
+
+on:
+  push:
+    branches: [main]
+    paths: ['ai/support-agent/**']
+  pull_request:
+    branches: [main]
+    paths: ['ai/support-agent/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  redteam:
+    name: LLM red-team
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # secrets context isn't allowed in `if`; map to env and gate on it.
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Blank the key so this always runs the deterministic mock: the vulnerable
+      # config must be exploitable and the hardened one must not, and the hardened
+      # agent must not over-refuse the benign case. Also enforces the cost SLO.
+      - name: Offline red-team (deterministic delta + cost SLO)
+        env:
+          ANTHROPIC_API_KEY: ""
+        run: python3 ai/support-agent/redteam/run_redteam.py --max-cost-usd 0.05
+
+      # The real security gate: measure the actual model and fail if the hardened
+      # config is exploited more than the floor. Runs only when the key is set.
+      - name: Live red-team against Claude (only when a key is configured)
+        if: env.ANTHROPIC_API_KEY != ''
+        run: |
+          python3 -m pip install --quiet --break-system-packages -r ai/support-agent/requirements.txt
+          python3 ai/support-agent/redteam/run_redteam.py --max-hardened-exploit 0.2 --max-cost-usd 0.10

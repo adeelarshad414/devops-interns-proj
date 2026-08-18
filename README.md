@@ -78,6 +78,10 @@ report findings**:
 > stack; you fix it; the [auto-grader](grader/) probes the live system and scores your
 > fix, per check, with a hint on every miss (`make challenges` / `make grade C=...`).
 
+> 🛡️ **LLMOps + AI-security lab:** a support agent built [twice](ai/support-agent/) —
+> vulnerable vs hardened — against the OWASP-LLM Top 10, with a **red-team eval gate**
+> and a **token-cost SLO** wired into CI (`make redteam`).
+
 > 🗺️ **New to the field?** [roadmap.sh/devops](https://roadmap.sh/devops) is the
 > canonical *what to learn* map — daig is the *do it* companion. TRAINING.md maps
 > each area to its roadmap.sh track ([kubernetes](https://roadmap.sh/kubernetes),
