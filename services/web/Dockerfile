@@ -7,7 +7,12 @@
 # To swap in React later: add a `FROM node:22-alpine AS build` stage that runs
 # `npm ci && npm run build`, then COPY --from=build /app/dist to the html dir.
 # Nothing else in the repo changes.
-FROM nginx:1.31-alpine
+#
+# nginx-unprivileged runs as the non-root 'nginx' user (uid 101), already listens
+# on 8080, and writes its pid + temp files under /tmp - so the container can run
+# with runAsNonRoot + a read-only root filesystem (see k8s/base/web.yaml). This is
+# the "tighten once every image runs rootless" step the namespace PSA note calls out.
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 COPY services/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY services/web/public /usr/share/nginx/html
 EXPOSE 8080
