@@ -1,0 +1,3 @@
+# The red-team harness and its deterministic mock are stdlib-only. Only the live
+# Claude agent needs the SDK.
+anthropic>=0.40

@@ -132,6 +132,9 @@ copilot: ## AI SRE incident copilot demo on a recorded incident (uses Claude if 
 copilot-eval: ## Grade the copilot against labelled fixtures (baseline; Claude if a key is set)
 	python3 ai/incident-copilot/evals/run_evals.py
 
+redteam: ## Run the OWASP-LLM red-team against the support-agent lab (offline mock; Claude if a key is set)
+	python3 ai/support-agent/redteam/run_redteam.py --max-cost-usd 0.10
+
 # ---------------------------------------------------------------- checks
 check: ## Static checks - no Docker or network needed
 	@echo "javascript..."
@@ -159,4 +162,4 @@ hooks: ## Install the pre-commit hook
 .PHONY: help up down nuke logs ps seed smoke psql obs load load-spike \
         vault-up vault-app vault-demo vault-ui vault-seal \
         sonar sec-up scan scan-sast dast egress-up egress-test insecure-on insecure-off \
-        broken copilot copilot-eval challenges grade grade-selftest check test fmt-check hooks
+        broken copilot copilot-eval challenges grade grade-selftest redteam check test fmt-check hooks
