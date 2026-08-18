@@ -67,6 +67,23 @@ Flow & conceptual diagrams per domain:
 - **[Observability & SRE](docs/assets/diagram-E-observability.png)** — four pillars, the pivot, burn-rate alerting
 - **[Docker](docs/assets/diagram-F-docker-lifecycle.png)** — build → scan → sign → ship → run
 - **[Traffic management](docs/assets/diagram-G-traffic-management.png)** — reverse/forward proxy · load balancer · autoscaling · API gateway
+- **[AI & platform extensions](docs/assets/diagram-H-ai-platform-extensions.svg)** — the AIOps copilot, the auto-grader arena, the LLMOps/AI-security lab and the FinOps cost gate, and where each plugs in
+
+---
+
+## 🧩 AI & platform extensions
+
+Beyond the core curriculum, four capabilities turn the platform from something you
+*read* into something you *measure* — each ships with an eval or a gate wired into CI:
+
+![AI & platform extensions](docs/assets/diagram-H-ai-platform-extensions.svg)
+
+| Extension | What it does | Try it |
+|---|---|---|
+| **[AI Incident Copilot](ai/incident-copilot/)** · AIOps | reads live telemetry during an incident → ranked root-cause hypotheses, graded by an eval harness (accuracy@1/@3) | `make copilot` / `make copilot-eval` |
+| **[Auto-grader arena](challenges/)** · interactive | a challenge injects a fault; you fix it; the grader probes live state and scores it, per check, with a hint on every miss | `make challenges` / `make grade C=…` |
+| **[LLMOps + AI-security lab](ai/support-agent/)** · OWASP-LLM | a support agent, vulnerable vs hardened, with a red-team eval gate (100%→0% exploit) and a token-cost SLO | `make redteam` |
+| **[Infracost PR bot](.github/workflows/infracost.yml)** · FinOps | every `infra/**` PR gets a monthly-cost diff + a guardrail that fails the build past a $ threshold | auto on PRs (needs `INFRACOST_API_KEY`) |
 
 ---
 

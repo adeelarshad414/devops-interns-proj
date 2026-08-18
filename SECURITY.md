@@ -35,7 +35,8 @@ Please do not open a public issue for a real finding.
 | `k8s/base/secret.yaml` | Inline `stringData` | Comment in file |
 | `db/init/001_schema.sql` | Two indexes commented out | Day 4 exercise |
 | `docker-compose.yml` | Database port published to the host | Day 3 exercise |
-| `vault/.init-keys.json` | All 5 unseal keys in one file | `vault/README.md` |
+| `vault/.init-keys.json` | Generated locally, never committed (`.gitignore`d); if present, all 5 unseal keys in one file | `vault/README.md` |
+| `ai/support-agent/prompts.py` | OWASP-LLM lab: prompt injection (LLM01), insecure output handling (LLM02), secret disclosure (LLM06) — vulnerable vs hardened, red-teamed | `ai/support-agent/README.md` |
 
 Every one of these is deliberate, labelled in place, and exists so that a scanner
 has something true to find.
