@@ -13,6 +13,14 @@ script; the rest are marked `[E]` and **must** be confirmed against the official
 calculators before anyone commits budget. US regions; EU and APAC run 8–30%
 higher. Excludes tax. All monthly figures derive from **730 hours/month**.
 
+> 🤖 **Cost as a CI signal (FinOps):** every PR that touches `infra/**` gets an
+> automated [Infracost](https://www.infracost.io/) monthly-cost diff commented on it,
+> with a **guardrail that fails the build** when a change raises estimated spend past
+> a threshold — see [`.github/workflows/infracost.yml`](../.github/workflows/infracost.yml).
+> It activates once an `INFRACOST_API_KEY` secret (free) is configured, and skips
+> cleanly otherwise. This `cost-model.py` is the *design-time* estimate; Infracost is
+> the *per-change* one.
+
 ---
 
 ## The headline
