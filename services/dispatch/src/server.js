@@ -6,6 +6,7 @@ const express = require('express');
 const { registry, httpMetrics } = require('../../_shared/metrics');
 const { makePool } = require('../../_shared/db');
 const { installGracefulShutdown } = require('../../_shared/shutdown');
+const { pickLeastLoaded } = require('./select');
 const log = require('../../_shared/logger').build('dispatch');
 
 const SERVICE = 'dispatch';
@@ -56,8 +57,7 @@ module.exports = function startServer(config) {
           WHERE rider_id = $1 AND state = 'ASSIGNED'`, [r.id]);
       scored.push({ ...r, load: c.load });
     }
-    scored.sort((a, b) => a.load - b.load);
-    return scored[0];
+    return pickLeastLoaded(scored);
   }
 
   const app = express();
