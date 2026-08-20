@@ -95,7 +95,7 @@ jobs:
 
       # Upload only if Semgrep actually produced the SARIF (it may not when the
       # scan exits non-zero on findings). Guarding avoids a spurious job failure.
-      - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
+      - uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v3
         if: always() && hashFiles('semgrep.sarif') != ''
         with:
           sarif_file: semgrep.sarif
@@ -173,7 +173,7 @@ jobs:
           format: sarif
           output: trivy-config.sarif
 
-      - uses: github/codeql-action/upload-sarif@c4dd10e44af883a891fe31ced449bcb4a6728b9b # v3
+      - uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v3
         if: always()
         with:
           sarif_file: trivy-config.sarif
